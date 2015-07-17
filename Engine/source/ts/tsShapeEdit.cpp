@@ -1566,8 +1566,8 @@ bool TSShape::addSequence(const Torque::Path& path, const String& fromSeq,
    groundRotations.reserve(groundRotations.size() + seq.numGroundFrames);
    for (S32 i = 0; i < seq.numGroundFrames; i++)
    {
-      groundTranslations.push_back(srcShape->groundTranslations[groundBase + i]);
-      groundRotations.push_back(srcShape->groundRotations[groundBase + i]);
+      groundTranslations.push_back(srcShape->groundTranslations[i]);
+      groundRotations.push_back(srcShape->groundRotations[i]);
    }
 
    // Add triggers
