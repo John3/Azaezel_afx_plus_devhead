@@ -50,9 +50,9 @@ S32 SimDataBlock::sNextModifiedKey = 0;
 ConsoleDocClass( SimDataBlock,
    "@brief \n"
    "@ingroup \n"
-   
+
    "@section Datablock_Networking Datablocks and Networking\n"
-   
+
    "@section Datablock_ClientSide Client-Side Datablocks\n"
 );
 
@@ -99,7 +99,7 @@ SimDataBlock::SimDataBlock(const SimDataBlock& other, bool temp_clone) : SimObje
 // a destructor is added to SimDataBlock so that we can delete any substitutions.
 SimDataBlock::~SimDataBlock()
 {
-   clear_substitutions();  
+   clear_substitutions();
 }
 
 void SimDataBlock::clear_substitutions()
@@ -107,7 +107,7 @@ void SimDataBlock::clear_substitutions()
    for (S32 i = 0; i < substitutions.size(); i++)
       delete substitutions[i];
    substitutions.clear();
-} 
+}
 
 void SimDataBlock::addSubstitution(StringTableEntry slot, S32 idx, const char* subst)
 {
@@ -189,13 +189,13 @@ void SimDataBlock::copySubstitutionsFrom(SimDataBlock* other)
 
 //
 // This is the method that evaluates any substitution statements on a datablock and does the
-// actual replacement of substituted datablock fields. 
+// actual replacement of substituted datablock fields.
 //
 // Much of the work is done by passing the statement to Con::evaluate() but first there are
-// some key operations performed on the statement. 
+// some key operations performed on the statement.
 //   -- Instances of "%%" in the statement are replaced with the id of the <obj> object.
 //   -- Instances of "##" are replaced with the value of <index>.
-// 
+//
 // There are also some return values that get special treatment.
 //   -- An empty result will produce a realtime error message.
 //   -- A result of "~~" will leave the original field value unchanged.
@@ -254,12 +254,12 @@ void SimDataBlock::performSubstitutions(SimDataBlock* dblock, const SimObject* o
             else
             {
                b[0] = v[0];
-               b++; 
+               b++;
                v++;
             }
          }
 
-         AssertFatal((U32)b < (U32)b_oob, "Substitution buffer overflowed");
+         AssertFatal(U32((uintptr_t)b) < U32((uintptr_t)b_oob), "Substitution buffer overflowed");
 
          b[0] = '\0';
 
@@ -269,7 +269,7 @@ void SimDataBlock::performSubstitutions(SimDataBlock* dblock, const SimObject* o
          const char *result = Con::evaluate(avar("return %s;", buffer), false, 0);
          if (Compiler::gSyntaxError)
          {
-            Con::errorf("Field Substitution Failed: field=\"%s\" substitution=\"%s\" -- syntax error", 
+            Con::errorf("Field Substitution Failed: field=\"%s\" substitution=\"%s\" -- syntax error",
                substitutions[i]->slot, substitutions[i]->value);
             Compiler::gSyntaxError = false;
             return;
@@ -278,7 +278,7 @@ void SimDataBlock::performSubstitutions(SimDataBlock* dblock, const SimObject* o
          // output a runtime console error when a substitution produces and empty result.
          if (result == 0 || result[0] == '\0')
          {
-            Con::errorf("Field Substitution Failed: field=\"%s\" substitution=\"%s\" -- empty result", 
+            Con::errorf("Field Substitution Failed: field=\"%s\" substitution=\"%s\" -- empty result",
                substitutions[i]->slot, substitutions[i]->value);
             return;
          }
@@ -304,7 +304,7 @@ void SimDataBlock::performSubstitutions(SimDataBlock* dblock, const SimObject* o
 
          if (field->keepClearSubsOnly && result[0] != '\0')
          {
-            Con::errorf("Field Substitution Failed: field \"%s\" of datablock %s only allows \"$$ ~~\" (keep) and \"$$ ~0\" (clear) field substitutions. [%s]", 
+            Con::errorf("Field Substitution Failed: field \"%s\" of datablock %s only allows \"$$ ~~\" (keep) and \"$$ ~0\" (clear) field substitutions. [%s]",
                substitutions[i]->slot, this->getClassName(), this->getName());
             continue;
          }
@@ -344,7 +344,7 @@ bool SimDataBlock::onAdd()
    if ( !isClientOnly() )
       if (SimGroup* grp = Sim::getDataBlockGroup())
          grp->addObject(this);
-         
+
    Sim::getDataBlockSet()->addObject( this );
 
    return true;
