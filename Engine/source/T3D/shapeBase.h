@@ -97,7 +97,7 @@ class SFXProfile;
 
 typedef void* Light;
 
-
+#define ShapeStates 16
 //--------------------------------------------------------------------------
 
 extern void collisionFilter(SceneObject* object,S32 key);
@@ -398,7 +398,6 @@ struct ShapeBaseImageData: public GameBaseData {
    bool  usesEnergy;                ///< Does this use energy instead of ammo?
    F32   minEnergy;                 ///< Minimum energy for the weapon to be operable.
    bool  accuFire;                  ///< Should we automatically make image's aim converge with the crosshair?
-   bool  cloakable;                 ///< Is this image cloakable when mounted?
 
    /// @name Lighting
    /// @{
@@ -534,9 +533,12 @@ public:
    enum Constants {
       MaxCollisionShapes = 8,
       AIRepairNode		= 31,
+      DAMAGE_LEVELS = 3,
       MaxHitboxes      = 20    // Max number of hitboxes allowed per player
    };
-
+   bool mUseCollisonLods;
+   S32 mColSets;        //track how many collision-# a given model's got.
+   S32 mColSetReport;   //strictly for reporting via game editor. does nothing else
    // TODO: These are only really used in Basic Lighting
    // mode... we should probably move them somewhere else.
    bool shadowEnable;
@@ -545,9 +547,9 @@ public:
    F32 shadowProjectionDistance;
    F32 shadowSphereAdjust;
 
+   bool mUseHitboxes;
    S32 mHitMeshID[MaxHitboxes];   /// Hit Mesh ID
    StringTableEntry  shapeName;
-   StringTableEntry  cloakTexName;
 
    String cubeDescName;
    U32 cubeDescId;
@@ -617,7 +619,6 @@ public:
    S32 earNode;                         ///< Shape's ear node index
    S32 cameraNode;                      ///< Shape's camera node index
    S32 mountPointNode[SceneObject::NumMountPoints];  ///< Node index of mountPoint
-   S32 debrisDetail;                    ///< Detail level used to generate debris
    S32 damageSequence;                  ///< Damage level decals
    S32 hulkSequence;                    ///< Destroyed hulk
 
@@ -625,12 +626,12 @@ public:
 
    /// @name Collision Data
    /// @{
-   Vector<S32>   collisionDetails;  ///< Detail level used to collide with.
+   Vector<S32>   collisionDetails[ShapeStates];  ///< Detail level used to collide with.
                                     ///
                                     /// These are detail IDs, see TSShape::findDetail()
-   Vector<Box3F> collisionBounds;   ///< Detail level bounding boxes.
+   Vector<Box3F> collisionBounds[ShapeStates];   ///< Detail level bounding boxes.
 
-   Vector<S32>   LOSDetails;        ///< Detail level used to perform line-of-sight queries against.
+   Vector<S32>   LOSDetails[ShapeStates];        ///< Detail level used to perform line-of-sight queries against.
                                     ///
                                     /// These are detail IDs, see TSShape::findDetail()
    /// @}
@@ -659,6 +660,13 @@ public:
    static void initPersistFields();
    virtual void packData(BitStream* stream);
    virtual void unpackData(BitStream* stream);
+
+   ParticleEmitterData *   mDamageEmitterList[DAMAGE_LEVELS];
+   Point3F mDamageEmitterOffset[DAMAGE_LEVELS];
+   S32 mDamageEmitterIDList[DAMAGE_LEVELS];
+   F32 mDamageLevelTolerance[DAMAGE_LEVELS];
+   F32 mNumDmgEmitterAreas;
+
    /// @}
 
    /// @name Callbacks
@@ -671,7 +679,6 @@ public:
    DECLARE_CALLBACK( void, onDamage, ( ShapeBase* obj, F32 delta ) );
    DECLARE_CALLBACK( void, onTrigger, ( ShapeBase* obj, S32 index, bool state ) );
    DECLARE_CALLBACK(void, onEndSequence, (ShapeBase* obj, S32 slot, const char* name));
-   DECLARE_CALLBACK( void, onForceUncloak, ( ShapeBase* obj, const char* reason ) );
    /// @}
 
    // AFX CODE BLOCK (remap-txr-tags) <<
@@ -749,7 +756,7 @@ protected:
    //GameConnection*   mControllingClient;        ///< Controlling client
    ShapeBase*        mControllingObject;        ///< Controlling object
    bool              mTrigger[MaxTriggerKeys];  ///< What triggers are set, if any.
-
+   U8 mActiveCollisionset;
 
    /// @name Scripted Sound
    /// @{
@@ -913,6 +920,10 @@ protected:
    /// @name Physical Properties
    /// @{
 
+
+   public:
+   F32 mTeamId;
+   protected:
    F32 mEnergy;                     ///< Current enery level.
    F32 mRechargeRate;               ///< Energy recharge rate (in units/tick).
 
@@ -990,13 +1001,6 @@ protected:
    TSThread *mDamageThread;
    TSThread *mHulkThread;
    VectorF damageDir;
-   /// @}
-
-   /// @name Cloaking
-   /// @{
-   bool mCloaked;
-   F32  mCloakLevel;
-//   TextureHandle mCloakTexture;
    /// @}
 
    /// @name Fading
@@ -1164,7 +1168,8 @@ public:
    ~ShapeBase();
 
    TSShapeInstance* getShapeInstance() { return mShapeInstance; }
-
+   Point3F getNodePosition(const String &nodeName) const;
+   Point3F getNodePosition(const S32 nodeIdx) const;
    static void initPersistFields();
    static bool _setFieldSkin( void *object, const char *index, const char *data );
    static const char *_getFieldSkin( void *object, const char *data );
@@ -1177,10 +1182,11 @@ public:
       NameMask        = Parent::NextFreeMask,
       DamageMask      = Parent::NextFreeMask << 1,
       NoWarpMask      = Parent::NextFreeMask << 2,
-      CloakMask       = Parent::NextFreeMask << 3,
+      FadeMask        = Parent::NextFreeMask << 3,
       SkinMask        = Parent::NextFreeMask << 4,
       MeshHiddenMask  = Parent::NextFreeMask << 5,
-      SoundMaskN      = Parent::NextFreeMask << 6,       ///< Extends + MaxSoundThreads bits
+      LinkMask        = Parent::NextFreeMask << 6,
+      SoundMaskN      = Parent::NextFreeMask << 7,       ///< Extends + MaxSoundThreads bits
       ThreadMaskN     = SoundMaskN  << MaxSoundThreads,  ///< Extends + MaxScriptThreads bits
       ImageMaskN      = ThreadMaskN << MaxScriptThreads, ///< Extends + MaxMountedImage bits
       NextFreeMask    = ImageMaskN  << MaxMountedImages
@@ -1197,7 +1203,6 @@ public:
    static F32  sWhiteoutDec;
    static F32  sDamageFlashDec;
    static F32  sFullCorrectionDistance;
-   static F32  sCloakSpeed;               // Time to cloak, in seconds
       
    CubeReflector mCubeReflector;
 
@@ -1241,7 +1246,8 @@ public:
                         
    /// Set the force hidden state on a named mesh.
    void setMeshHidden( const char *meshName, bool forceHidden ); 
-   
+   void setActiveCollision(S32 _ActiveCollisionset);
+   U8 getActiveCollision(){ return mActiveCollisionset;}
 #ifndef TORQUE_SHIPPING
 
    /// Prints the list of meshes and their visibility state
@@ -1394,24 +1400,6 @@ public:
    /// Advance all animation threads attached to this shapebase
    /// @param   dt   Change in time from last call to this function
    void advanceThreads(F32 dt);
-   /// @}
-
-   /// @name Cloaking
-   /// @{
-
-   /// Force uncloaking of object
-   /// @param   reason   Reason this is being forced to uncloak, this is passed directly to script control
-   void forceUncloak(const char *reason);
-
-   /// Set cloaked state of object
-   /// @param   cloaked   True if object is cloaked
-   void setCloakedState(bool cloaked);
-
-   /// Returns true if object is cloaked
-   bool getCloakedState();
-
-   /// Returns level of cloaking, as it's not an instant "now you see it, now you don't"
-   F32 getCloakLevel();
    /// @}
 
    /// @name Mounted objects
@@ -1927,6 +1915,9 @@ protected:
    F32 saved_rate;
    U32 playBlendAnimation(S32 seq_id, F32 pos, F32 rate);
    void restoreBlendAnimation(U32 tag);
+   void updateDamageFX(F32 dt);
+   SimObjectPtr<ParticleEmitter> mDamageEmitterList[ShapeBaseData::DAMAGE_LEVELS];
+
 public:
    U32 playAnimation(const char* name, F32 pos, F32 rate, F32 trans, bool hold, bool wait, bool is_death_anim);
    F32 getAnimationDuration(const char* name);
@@ -1945,22 +1936,18 @@ public:
    // AFX CODE BLOCK (selection-highlight) <<
    virtual void setSelectionFlags(U8 flags);
    // AFX CODE BLOCK (selection-highlight) >>
+   void setMass( F32 mass );
+
+   S32      mObjectLinkId;
+   SimObjectPtr<ShapeBase> mObjectLink; ///< Actual pointer to the source object
+   S32      mLinkType;
+   static bool _setFieldLink(void *object, const char *index, const char *data);
 };
 
 
 //------------------------------------------------------------------------------
 // inlines
 //------------------------------------------------------------------------------
-
-inline bool ShapeBase::getCloakedState()
-{
-   return(mCloaked);
-}
-
-inline F32 ShapeBase::getCloakLevel()
-{
-   return(mCloakLevel);
-}
 
 inline const char* ShapeBase::getShapeName()
 {

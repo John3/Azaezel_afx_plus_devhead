@@ -140,18 +140,12 @@ IMPLEMENT_CALLBACK(ShapeBaseData, onEndSequence, void, (ShapeBase* obj, S32 slot
    "@param slot Thread slot that finished playing\n"
    "@param name Thread name that finished playing\n");
 
-IMPLEMENT_CALLBACK( ShapeBaseData, onForceUncloak, void, ( ShapeBase* obj, const char* reason ), ( obj, reason ),
-   "@brief Called when the object is forced to uncloak.\n\n"
-   "@param obj The ShapeBase object\n"
-   "@param reason String describing why the object was uncloaked\n" );
-
 //----------------------------------------------------------------------------
 // Timeout for non-looping sounds on a channel
 static SimTime sAudioTimeout = 500;
 F32  ShapeBase::sWhiteoutDec = 0.007f;
 F32  ShapeBase::sDamageFlashDec = 0.02f;
 F32  ShapeBase::sFullCorrectionDistance = 0.5f;
-F32  ShapeBase::sCloakSpeed = 0.5;
 U32  ShapeBase::sLastRenderFrame = 0;
 
 static const char *sDamageStateName[] =
@@ -172,7 +166,6 @@ ShapeBaseData::ShapeBaseData()
    shadowProjectionDistance( 10.0f ),
    shadowSphereAdjust( 1.0f ),
    shapeName( StringTable->insert("") ),
-   cloakTexName( StringTable->insert("") ),
    cubeDescId( 0 ),
    reflectorDesc( NULL ),
    debris( NULL ),
@@ -200,7 +193,6 @@ ShapeBaseData::ShapeBaseData()
    cameraMaxFov( 120.f ),
    cameraCanBank( false ),
    mountedImagesBank( false ),
-   debrisDetail( -1 ),
    damageSequence( -1 ),
    hulkSequence( -1 ),
    observeThroughObject( false ),
@@ -211,11 +203,30 @@ ShapeBaseData::ShapeBaseData()
    computeCRC( false ),
    inheritEnergyFromMount( false ),
    mCRC(0),
+   mUseHitboxes(false),
    mIconHandle(NULL),
-   mHideIcon(false)
+   mHideIcon(false),
+   mUseCollisonLods(false),
+   mColSets(-1),
+   mColSetReport(1)
 {      
    dMemset( mountPointNode, -1, sizeof( S32 ) * SceneObject::NumMountPoints );
    mIcon = StringTable->insert("");
+
+   for (int n=0;n<ShapeStates;n++)
+   {
+       collisionDetails[n] = NULL;
+       collisionBounds[n] = NULL;
+       LOSDetails[n] = NULL;
+   }
+   for (int i=0; i< MaxHitboxes; i++) mHitMeshID[i] = -1;
+
+   dMemset(mDamageEmitterList, 0, sizeof(mDamageEmitterList));
+   dMemset(mDamageEmitterOffset, 0, sizeof(mDamageEmitterOffset));
+   dMemset(mDamageEmitterIDList, 0, sizeof(mDamageEmitterIDList));
+   dMemset(mDamageLevelTolerance, 0, sizeof(mDamageLevelTolerance));
+
+   mNumDmgEmitterAreas = 0;
 
    // AFX CODE BLOCK (remap-txr-tags) <<
    remap_txr_tags = NULL;
@@ -223,7 +234,7 @@ ShapeBaseData::ShapeBaseData()
    // AFX CODE BLOCK (remap-txr-tags) >>
    
    // AFX CODE BLOCK (bbox-check) <<
-   silent_bbox_check = false;
+   silent_bbox_check = true;
    // AFX CODE BLOCK (bbox-check) >>
 }
 
@@ -236,7 +247,6 @@ ShapeBaseData::ShapeBaseData(const ShapeBaseData& other, bool temp_clone) : Game
    shadowProjectionDistance = other.shadowProjectionDistance;
    shadowSphereAdjust = other.shadowSphereAdjust;
    shapeName = other.shapeName;
-   cloakTexName = other.cloakTexName;
    cubeDescName = other.cubeDescName;
    cubeDescId = other.cubeDescId;
    reflectorDesc = other.reflectorDesc;
@@ -270,13 +280,12 @@ ShapeBaseData::ShapeBaseData(const ShapeBaseData& other, bool temp_clone) : Game
    earNode = other.earNode; // -- from shape node "ear"
    cameraNode = other.cameraNode; // -- from shape node "cam"
    dMemcpy(mountPointNode, other.mountPointNode, sizeof(mountPointNode)); // -- from shape nodes "mount#" 0-31
-   debrisDetail = other.debrisDetail; // -- from shape detail "Debris-17"
    damageSequence = other.damageSequence; // -- from shape sequence "Damage"
    hulkSequence = other.hulkSequence; // -- from shape sequence "Visibility"
    observeThroughObject = other.observeThroughObject;
-   collisionDetails = other.collisionDetails; // -- calc from shape (this is a Vector copy)
-   collisionBounds = other.collisionBounds; // -- calc from shape (this is a Vector copy)
-   LOSDetails = other.LOSDetails; // -- calc from shape (this is a Vector copy)
+   for (S32 n = 0; n<ShapeStates; n++) collisionDetails[n] = other.collisionDetails[n]; // -- calc from shape (this is a Vector copy)
+   for (S32 n = 0; n<ShapeStates; n++) collisionBounds[n] = other.collisionBounds[n]; // -- calc from shape (this is a Vector copy)
+   for (S32 n = 0; n<ShapeStates; n++) LOSDetails[n] = other.LOSDetails[n]; // -- calc from shape (this is a Vector copy)
    firstPersonOnly = other.firstPersonOnly;
    useEyePoint = other.useEyePoint;
    isInvincible = other.isInvincible;
@@ -286,9 +295,22 @@ ShapeBaseData::ShapeBaseData(const ShapeBaseData& other, bool temp_clone) : Game
    remap_buffer = other.remap_buffer;
    txr_tag_remappings = other.txr_tag_remappings;
    silent_bbox_check = other.silent_bbox_check;
+   mIcon = other.mIcon;
+   mIconHandle = other.mIconHandle;
+   mHideIcon = other.mHideIcon;
+   mUseCollisonLods = other.mUseCollisonLods;
+   mColSets = other.mColSets;
+   mColSetReport = other.mColSetReport;
+   mUseHitboxes = other.mUseHitboxes;
+   for (S32 i = 0; i< MaxHitboxes; i++) mHitMeshID[i] = other.mHitMeshID[i];
+
+   dMemcpy(mDamageEmitterList, other.mDamageEmitterList, sizeof(mDamageEmitterList));
+   dMemcpy(mDamageEmitterOffset, other.mDamageEmitterOffset, sizeof(mDamageEmitterOffset));
+   dMemcpy(mDamageEmitterIDList, other.mDamageEmitterIDList, sizeof(mDamageEmitterIDList));
+   dMemcpy(mDamageLevelTolerance, other.mDamageLevelTolerance, sizeof(mDamageLevelTolerance));
+   mNumDmgEmitterAreas = other.mNumDmgEmitterAreas;
 }
 // AFX CODE BLOCK (datablock-temp-clone) >>
->>>>>>> afx_alts
 
 struct ShapeBaseDataProto
 {
@@ -419,50 +441,55 @@ bool ShapeBaseData::preload(bool server, String &errorStr)
       }
       // Resolve details and camera node indexes.
       static const String sCollisionStr( "collision-" );
-
+	  mColSets = -1;
       for (i = 0; i < mShape->details.size(); i++)
       {
          const String &name = mShape->names[mShape->details[i].nameIndex];
 
          if (name.compare( sCollisionStr, sCollisionStr.length(), String::NoCase ) == 0)
          {
-            collisionDetails.push_back(i);
-            collisionBounds.increment();
+             if (mUseCollisonLods)
+					 mColSets++;
+             else mColSets = 0;
+             if (mColSets>(ShapeStates-1)) mColSets = ShapeStates-1;
+            collisionDetails[mColSets].push_back(i);
+            collisionBounds[mColSets].increment();
 
-            mShape->computeBounds(collisionDetails.last(), collisionBounds.last());
-            mShape->getAccelerator(collisionDetails.last());
+            mShape->computeBounds(collisionDetails[mColSets].last(), collisionBounds[mColSets].last());
+            mShape->getAccelerator(collisionDetails[mColSets].last());
 
-            if (!mShape->bounds.isContained(collisionBounds.last()))
+            if (!mShape->bounds.isContained(collisionBounds[mColSets].last()))
             {
                // AFX CODE BLOCK (bbox-check) <<
                if (!silent_bbox_check)
-               // AFX CODE BLOCK (bbox-check) >>
-               Con::warnf("Warning: shape %s collision detail %d (Collision-%d) bounds exceed that of shape.", shapeName, collisionDetails.size() - 1, collisionDetails.last());
-               collisionBounds.last() = mShape->bounds;
+                  // AFX CODE BLOCK (bbox-check) >>
+               Con::warnf("Warning: shape %s collision detail %d (Collision-%d) bounds exceed that of shape.", shapeName, collisionDetails[mColSets].size() - 1, collisionDetails[mColSets].last());
+               collisionBounds[mColSets].last() = mShape->bounds;
             }
-            else if (collisionBounds.last().isValidBox() == false)
+            else if (collisionBounds[mColSets].last().isValidBox() == false)
             {
                // AFX CODE BLOCK (bbox-check) <<
                if (!silent_bbox_check)
-               // AFX CODE BLOCK (bbox-check) >>
-               Con::errorf("Error: shape %s-collision detail %d (Collision-%d) bounds box invalid!", shapeName, collisionDetails.size() - 1, collisionDetails.last());
-               collisionBounds.last() = mShape->bounds;
+                  // AFX CODE BLOCK (bbox-check) >>
+               Con::errorf("Error: shape %s-collision detail %d (Collision-%d) bounds box invalid!", shapeName, collisionDetails[mColSets].size() - 1, collisionDetails[mColSets].last());
+               collisionBounds[mColSets].last() = mShape->bounds;
             }
 
             // The way LOS works is that it will check to see if there is a LOS detail that matches
             // the the collision detail + 1 + MaxCollisionShapes (this variable name should change in
             // the future). If it can't find a matching LOS it will simply use the collision instead.
             // We check for any "unmatched" LOS's further down
-            LOSDetails.increment();
+            LOSDetails[mColSets].increment();
 
             String   buff = String::ToString("LOS-%d", i + 1 + MaxCollisionShapes);
             U32 los = mShape->findDetail(buff);
             if (los == -1)
-               LOSDetails.last() = i;
+               LOSDetails[mColSets].last() = i;
             else
-               LOSDetails.last() = los;
+               LOSDetails[mColSets].last() = los;
          }
       }
+      mColSetReport = mColSets+1;
 
       // Snag any "unmatched" LOS details
       static const String sLOSStr( "LOS-" );
@@ -475,9 +502,9 @@ bool ShapeBaseData::preload(bool server, String &errorStr)
          {
             // See if we already have this LOS
             bool found = false;
-            for (U32 j = 0; j < LOSDetails.size(); j++)
+            for (U32 j = 0; j < LOSDetails[mColSets].size(); j++)
             {
-               if (LOSDetails[j] == i)
+               if (LOSDetails[mColSets][j] == i)
                {
                      found = true;
                      break;
@@ -485,7 +512,7 @@ bool ShapeBaseData::preload(bool server, String &errorStr)
             }
 
             if (!found)
-               LOSDetails.push_back(i);
+               LOSDetails[mColSets].push_back(i);
          }
       }
 	  
@@ -494,11 +521,10 @@ bool ShapeBaseData::preload(bool server, String &errorStr)
 	  for (i=0; i< MaxHitboxes; i++)
 	  {
 		  char buff[16];
-		  dSprintf(buff,sizeof(buff),"Hitbox%d",i+1);
+         dSprintf(buff, sizeof(buff), "HB%d", i + 1);
 		  mHitMeshID[i] = mShape->findObject(buff);
 	  }
 
-      debrisDetail = mShape->findDetail("Debris-17");
       eyeNode = mShape->findNode("eye");
       earNode = mShape->findNode( "ear" );
       if( earNode == -1 )
@@ -578,6 +604,18 @@ bool ShapeBaseData::preload(bool server, String &errorStr)
       Sim::findObject( cubeDescId, reflectorDesc );
    }
 
+   U32 index;
+   for (index = 0; index<DAMAGE_LEVELS; index++)
+   {
+      if (!mDamageEmitterList[index] && mDamageEmitterIDList[index] != 0)
+      {
+         if (!Sim::findObject(mDamageEmitterIDList[index], mDamageEmitterList[index]))
+         {
+            Con::errorf(ConsoleLogEntry::General, "PlayerData::preload Invalid packet, bad datablockId(damageEmitter): 0x%x", mDamageEmitterIDList[index]);
+         }
+      }
+   }
+
    return !shapeError;
 }
 
@@ -624,6 +662,37 @@ void ShapeBaseData::initPersistFields()
       addField("hideIcon", TypeBool, Offset(mHideIcon, ShapeBaseData));
    endGroup( "Render" );
 
+   addGroup("Damage Emitters");
+   addField("damageEmitter", TYPEID< ParticleEmitterData >(), Offset(mDamageEmitterList, ShapeBaseData), DAMAGE_LEVELS,
+      "@brief Array of particle emitters used to generate damage (dust, smoke etc) "
+      "effects.\n\n"
+      "Currently, the first two emitters (indices 0 and 1) are used when the damage "
+      "level exceeds the associated damageLevelTolerance. The 3rd emitter is used "
+      "when the emitter point is underwater.\n\n"
+      "@see damageEmitterOffset");
+   addField("damageEmitterOffset", TypePoint3F, Offset(mDamageEmitterOffset, ShapeBaseData), DAMAGE_LEVELS,
+      "@brief Object space \"x y z\" offsets used to emit particles for the "
+      "active damageEmitter.\n\n"
+      "@tsexample\n"
+      "// damage levels\n"
+      "damageLevelTolerance[0] = 0.5;\n"
+      "damageEmitter[0] = SmokeEmitter;\n"
+      "// emit offsets (used for all active damage level emitters)\n"
+      "damageEmitterOffset[0] = \"0.5 3 1\";\n"
+      "damageEmitterOffset[1] = \"-0.5 3 1\";\n"
+      "numDmgEmitterAreas = 2;\n"
+      "@endtsexample\n");
+   addField("damageLevelTolerance", TypeF32, Offset(mDamageLevelTolerance, ShapeBaseData), DAMAGE_LEVELS,
+      "@brief Damage levels (as a percentage of maxDamage) above which to begin "
+      "emitting particles from the associated damageEmitter.\n\n"
+      "Levels should be in order of increasing damage.\n\n"
+      "@see damageEmitterOffset");
+   addField("numDmgEmitterAreas", TypeF32, Offset(mNumDmgEmitterAreas, ShapeBaseData),
+      "Number of damageEmitterOffset values to use for each damageEmitter.\n\n"
+      "@see damageEmitterOffset");
+   endGroup("Damage Emitters");
+
+
    addGroup( "Destruction", "Parameters related to the destruction effects of this object." );
 
       addField( "explosion", TYPEID< ExplosionData >(), Offset(explosion, ShapeBaseData),
@@ -646,6 +715,13 @@ void ShapeBaseData::initPersistFields()
          "Drag factor.\nReduces velocity of moving objects." );
       addField( "density", TypeF32, Offset(density, ShapeBaseData),
          "Shape density.\nUsed when computing buoyancy when in water.\n" );
+      addField( "useCollisonLods", TypeBool, Offset(mUseCollisonLods, ShapeBaseData),
+         "Do we use multiple collision levels of detail for this object?" );
+      addField( "ColSetCount", TypeS8, Offset(mColSetReport, ShapeBaseData),
+         "How many collisionsets do we have for this model?" );
+      addField( "UseHitboxes", TypeBool, Offset(mUseHitboxes, ShapeBaseData),
+         "How many collisionsets do we have for this model?" );
+
    endGroup( "Physics" );
 
    addGroup( "Damage/Energy" );
@@ -828,12 +904,13 @@ void ShapeBaseData::packData(BitStream* stream)
    stream->write(shadowMaxVisibleDistance);
    stream->write(shadowProjectionDistance);
    stream->write(shadowSphereAdjust);
-
+   stream->writeFlag(mUseCollisonLods);
+   stream->write(mColSets);
+   stream->write(mColSetReport);
 
    stream->writeString(shapeName);
    stream->writeString(mIcon);
    stream->writeFlag(mHideIcon);
-   stream->writeString(cloakTexName);
    if(stream->writeFlag(mass != gShapeBaseDataProto.mass))
       stream->write(mass);
    if(stream->writeFlag(drag != gShapeBaseDataProto.drag))
@@ -887,11 +964,13 @@ void ShapeBaseData::packData(BitStream* stream)
       stream->writeRangedU32( reflectorDesc->getId(), DataBlockObjectIdFirst,  DataBlockObjectIdLast );
    }
 
-   //stream->write(reflectPriority);
-   //stream->write(reflectMaxRateMs);
-   //stream->write(reflectMinDist);
-   //stream->write(reflectMaxDist);
-   //stream->write(reflectDetailAdjust);
+   for (S32 j = 0; j < DAMAGE_LEVELS; j++)
+   {
+      stream->write(mDamageEmitterOffset[j].x);
+      stream->write(mDamageEmitterOffset[j].y);
+      stream->write(mDamageEmitterOffset[j].z);
+      stream->write(mDamageLevelTolerance[j]);
+   }
 
    // AFX CODE BLOCK (remap-txr-tags)(bbox-check) <<
    stream->writeString(remap_txr_tags);
@@ -911,13 +990,16 @@ void ShapeBaseData::unpackData(BitStream* stream)
    stream->read(&shadowMaxVisibleDistance);
    stream->read(&shadowProjectionDistance);
    stream->read(&shadowSphereAdjust);
+   mUseCollisonLods = stream->readFlag();
+   stream->read(&mColSets);
+   stream->read(&mColSetReport);
 
    shapeName = stream->readSTString();
    mIcon = stream->readSTString();
    if ((mIcon) && (mIcon[0])) mIconHandle = GFXTexHandle(mIcon, &GFXDefaultStaticDiffuseProfile, "Adescription");
 
    mHideIcon = stream->readFlag();
-   cloakTexName = stream->readSTString();
+
    if(stream->readFlag())
       stream->read(&mass);
    else
@@ -997,11 +1079,13 @@ void ShapeBaseData::unpackData(BitStream* stream)
       cubeDescId = stream->readRangedU32( DataBlockObjectIdFirst, DataBlockObjectIdLast );
    }
 
-   //stream->read(&reflectPriority);
-   //stream->read(&reflectMaxRateMs);
-   //stream->read(&reflectMinDist);
-   //stream->read(&reflectMaxDist);
-   //stream->read(&reflectDetailAdjust);
+   for (S32 j = 0; j<DAMAGE_LEVELS; j++)
+   {
+      stream->read(&mDamageEmitterOffset[j].x);
+      stream->read(&mDamageEmitterOffset[j].y);
+      stream->read(&mDamageEmitterOffset[j].z);
+      stream->read(&mDamageLevelTolerance[j]);
+   }
 
    // AFX CODE BLOCK (remap-txr-tags)(bbox-check) <<
    remap_txr_tags = stream->readSTString();
@@ -1065,7 +1149,6 @@ ShapeBase::ShapeBase()
    mGravityMod( 1.0f ),
    mDamageFlash( 0.0f ),
    mWhiteOut( 0.0f ),
-   mFlipFadeVal( false ),
    mTimeoutList( NULL ),
    mDamage( 0.0f ),
    mRepairRate( 0.0f ),
@@ -1074,18 +1157,22 @@ ShapeBase::ShapeBase()
    mDamageThread( NULL ),
    mHulkThread( NULL ),
    damageDir( 0.0f, 0.0f, 1.0f ),
-   mCloaked( false ),
-   mCloakLevel( 0.0f ),
    mFadeOut( true ),
    mFading( false ),
    mFadeVal( 1.0f ),
    mFadeElapsedTime( 0.0f ),
    mFadeTime( 1.0f ),
    mFadeDelay( 0.0f ),
+   mFlipFadeVal( false ),
+   mTeamId(0),
    mCameraFov( 90.0f ),
    mIsControlled( false ),
    mLastRenderFrame( 0 ),
-   mLastRenderDistance( 0.0f )
+   mLastRenderDistance( 0.0f ),
+   mActiveCollisionset(0),
+   mObjectLinkId(-1),
+   mObjectLink(NULL),
+   mLinkType(0)
 {
    mTypeMask |= ShapeBaseObjectType | LightObjectType;   
 
@@ -1108,6 +1195,8 @@ ShapeBase::ShapeBase()
 
    for (i = 0; i < MaxTriggerKeys; i++)
       mTrigger[i] = false;
+
+   dMemset(mDamageEmitterList, 0, sizeof(mDamageEmitterList));
 
    // AFX CODE BLOCK (anim-clip) <<
    anim_clip_flags = 0;
@@ -1175,7 +1264,30 @@ void ShapeBase::initPersistFields()
       "@brief Is this object AI controlled.\n\n"
       "If True then this object is considered AI controlled and not player controlled.\n" );
 
+   addField( "team", TypeF32, Offset(mTeamId, ShapeBase),
+      "@brief What team is it on?\n\n"
+      "Sets a team for filtering.\n" );
+
+   addProtectedField("link", TypeS32, Offset(mObjectLinkId, ShapeBase),
+      &_setFieldLink, &defaultProtectedGetFn,
+      "@object ID reference.\n\n");
+
+   addField("LinkType", TypeS32, Offset(mLinkType, ShapeBase),
+      "@brief What team is it on?\n\n"
+      "Sets a team for filtering.\n");
+   
    Parent::initPersistFields();
+}
+
+bool ShapeBase::_setFieldLink(void *object, const char *index, const char *data)
+{
+   ShapeBase* so = static_cast<ShapeBase*>(object);
+   if (so)
+   {
+      Con::setData(TypeS32, &so->mObjectLinkId, 0, 1, &data);      
+      so->setMaskBits(LinkMask);
+   }
+   return false;
 }
 
 bool ShapeBase::_setFieldSkin( void *object, const char *index, const char *data )
@@ -1218,11 +1330,6 @@ bool ShapeBase::onAdd()
          updateThread(st);
    }   
 
-/*
-      if(mDataBlock->cloakTexName != StringTable->insert(""))
-        mCloakTexture = TextureHandle(mDataBlock->cloakTexName, MeshTexture, false);
-*/         
-
    // Accumulation and environment mapping
    if (isClientObject() && mShapeInstance)
    {
@@ -1230,6 +1337,25 @@ bool ShapeBase::onAdd()
          AccumulationVolume::addObject(this);
       EnvVolume::addObject(this);
    }
+
+   U32 j;
+   for (j = 0; j<ShapeBaseData::DAMAGE_LEVELS; j++)
+   {
+      if (mDataBlock->mDamageEmitterList[j])
+      {
+         mDamageEmitterList[j] = new ParticleEmitter;
+         mDamageEmitterList[j]->onNewDataBlock(mDataBlock->mDamageEmitterList[j], false);
+         if (!mDamageEmitterList[j]->registerObject())
+         {
+            Con::warnf(ConsoleLogEntry::General, "Could not register damage emitter for class: %s", mDataBlock->getName());
+            delete mDamageEmitterList[j];
+            mDamageEmitterList[j] = NULL;
+         }
+      }
+   }
+
+   mObjectLinkId = -1;
+   mObjectLink = NULL;
    return true;
 }
 
@@ -1250,6 +1376,15 @@ void ShapeBase::onRemove()
       if (mShapeInstance->hasAccumulation())
          AccumulationVolume::removeObject(this);
       EnvVolume::removeObject(this);
+   }
+
+   for (U32 i = 0; i<ShapeBaseData::DAMAGE_LEVELS; i++)
+   {
+      if (mDamageEmitterList[i])
+      {
+         mDamageEmitterList[i]->deleteWhenEmpty();
+         mDamageEmitterList[i] = NULL;
+      }
    }
 
    if ( isClientObject() )   
@@ -1332,7 +1467,6 @@ bool ShapeBase::onNewDataBlock( GameBaseData *dptr, bool reload )
       {
          mShapeInstance->setUserObject( this );
          mShapeInstance->cloneMaterialList();
-      }
 
          // restore the material tags to original form
          if (mDataBlock->txr_tag_remappings.size() > 0)
@@ -1479,6 +1613,7 @@ void ShapeBase::onImpact(const VectorF& vec)
 
 void ShapeBase::processTick(const Move* move)
 {
+   Parent::processTick(move);
    PROFILE_SCOPE( ShapeBase_ProcessTick );
 
    // Energy management
@@ -1498,11 +1633,11 @@ void ShapeBase::processTick(const Move* move)
    }
 
    // Repair management
-   if (mDataBlock->isInvincible == false)
+   if ((mDataBlock->isInvincible == false)&&(mDamageState == Enabled))
    {
       F32 store = mDamage;
       mDamage -= mRepairRate;
-      mDamage = mClampF(mDamage, 0.f, mDataBlock->maxDamage);
+      mDamage = mClampF(mDamage, 0.f, mDataBlock->maxDamage *2);
 
       if (mRepairReserve > mDamage)
          mRepairReserve = mDamage;
@@ -1546,8 +1681,6 @@ void ShapeBase::processTick(const Move* move)
       {
          F32 dt = TickMs / 1000.0f;
          F32 newFadeET = mFadeElapsedTime + dt;
-         if(mFadeElapsedTime < mFadeDelay && newFadeET >= mFadeDelay)
-            setMaskBits(CloakMask);
          mFadeElapsedTime = newFadeET;
          if(mFadeElapsedTime > mFadeTime + mFadeDelay)
          {
@@ -1594,10 +1727,17 @@ void ShapeBase::processTick(const Move* move)
       if (mWhiteOut <= 0.0)
          mWhiteOut = 0.0;
    }
+
+   if (isMounted()) {
+      MatrixF mat;
+      mMount.object->getMountTransform( mMount.node, mMount.xfm, &mat );
+      Parent::setTransform(mat);
+   }
 }
 
 void ShapeBase::advanceTime(F32 dt)
 {
+   Parent::advanceTime(dt);
    // On the client, the shape threads and images are
    // advanced at framerate.
    advanceThreads(dt);
@@ -1609,34 +1749,6 @@ void ShapeBase::advanceTime(F32 dt)
          updateImageAnimation(i, dt);
       }
 
-   // Cloaking
-   if (mCloaked && mCloakLevel != 1.0) {
-      if (sCloakSpeed <= 0.0f)
-      {
-         // Instantaneous
-         mCloakLevel = 1.0;
-      }
-      else
-      {
-         // Over time determined by sCloakSpeed
-         mCloakLevel += dt / sCloakSpeed;
-         if (mCloakLevel >= 1.0)
-            mCloakLevel = 1.0;
-      }
-   } else if (!mCloaked && mCloakLevel != 0.0) {
-      if (sCloakSpeed <= 0.0f)
-      {
-         // Instantaneous
-         mCloakLevel = 0.0;
-      }
-      else
-      {
-         // Over time determined by sCloakSpeed
-         mCloakLevel -= dt / sCloakSpeed;
-         if (mCloakLevel <= 0.0)
-            mCloakLevel = 0.0;
-      }
-   }
    if(mFading)
    {
       mFadeElapsedTime += dt;
@@ -1652,6 +1764,13 @@ void ShapeBase::advanceTime(F32 dt)
             mFadeVal = 1 - mFadeVal;
       }
    }
+
+   if (isMounted()) {
+      MatrixF mat;
+      mMount.object->getRenderMountTransform( 0.0f, mMount.node, mMount.xfm, &mat );
+      Parent::setRenderTransform(mat);
+   }
+   updateDamageFX(dt);
 }
 
 void ShapeBase::setControllingClient( GameConnection* client )
@@ -1818,7 +1937,7 @@ void ShapeBase::setDamageLevel(F32 damage)
 {
    if (!mDataBlock->isInvincible) {
       F32 store = mDamage;
-      mDamage = mClampF(damage, 0.f, mDataBlock->maxDamage);
+      mDamage = mClampF(damage, 0.f, mDataBlock->maxDamage *2);
 
       if (store != mDamage) {
          updateDamageLevel();
@@ -1886,7 +2005,7 @@ void ShapeBase::applyRepair(F32 amount)
 
 void ShapeBase::applyDamage(F32 amount)
 {
-   if (amount > 0)
+   if (amount != 0)
       setDamageLevel(mDamage + amount);
 }
 
@@ -2024,6 +2143,7 @@ void ShapeBase::blowUp()
    center += getPosition();
    MatrixF trans = getTransform();
    trans.setPosition( center );
+   damageDir.set(0, 0, 1);
 
    // explode
    Explosion* pExplosion = NULL;
@@ -2078,12 +2198,12 @@ void ShapeBase::blowUp()
    // cycle through partlist and create debris pieces
    for( U32 i=0; i<partList.size(); i++ )
    {
-      //Point3F axis( 0.0, 0.0, 1.0 );
+	  F32 percentOverkill = (mFabs(mDamage - mDataBlock->maxDamage) / mDataBlock->maxDamage) *100;
       Point3F randomDir = MathUtils::randomDir( damageDir, 0, 50 );
-
+	  if (percentOverkill <20) percentOverkill = 20;
       Debris *debris = new Debris;
       debris->setPartInstance( partList[i] );
-      debris->init( center, randomDir );
+      debris->init( center, randomDir * ((percentOverkill) * 0.25) );
       debris->onNewDataBlock( mDataBlock->debris, false );
       debris->setTransform( trans );
 
@@ -2797,7 +2917,7 @@ void ShapeBase::_prepRenderImage(   SceneRenderState *state,
             else
                image.shapeInstance[imageShapeIndex]->setDetailFromDistance( state, dist * invScale );
 
-            if (!mIsZero( (1.0f - mCloakLevel) * mFadeVal))
+            if (!mIsZero(mFadeVal))
             {
                prepBatchRender( state, i );
 
@@ -2852,7 +2972,7 @@ void ShapeBase::prepBatchRender(SceneRenderState* state, S32 mountedImageIndex )
          rdata.setCubemap(mEnvMap);
 
    rdata.setMaterialDamage(getDamageValue());
-   rdata.setFadeOverride( (1.0f - mCloakLevel) * mFadeVal );
+   rdata.setFadeOverride(mFadeVal);
 
    // We might have some forward lit materials
    // so pass down a query to gather lights.
@@ -2951,10 +3071,12 @@ bool ShapeBase::castRay(const Point3F &start, const Point3F &end, RayInfo* info)
       shortest.t = 1e8;
 
       info->object = NULL;
-      for (U32 i = 0; i < mDataBlock->LOSDetails.size(); i++)
+	  Vector<S32> collisionLOD = mDataBlock->LOSDetails[mActiveCollisionset];
+
+      for (U32 i = 0; i < collisionLOD.size(); i++)
       {
-         mShapeInstance->animate(mDataBlock->LOSDetails[i]);
-         if (mShapeInstance->castRay(start, end, info, mDataBlock->LOSDetails[i]))
+         mShapeInstance->animate(collisionLOD[i]);
+         if (mShapeInstance->castRay(start, end, info, collisionLOD[i]))
          {
             info->object = this;
             if (info->t < shortest.t)
@@ -3023,9 +3145,9 @@ bool ShapeBase::buildPolyList(PolyListContext context, AbstractPolyList* polyLis
    else
    {
       bool ret = false;
-      for (U32 i = 0; i < mDataBlock->collisionDetails.size(); i++)
+      for (U32 i = 0; i < mDataBlock->collisionDetails[mActiveCollisionset].size(); i++)
       {
-         mShapeInstance->buildPolyList(polyList,mDataBlock->collisionDetails[i]);
+         mShapeInstance->buildPolyList(polyList,mDataBlock->collisionDetails[mActiveCollisionset][i]);
          ret = true;
       }
 
@@ -3049,9 +3171,9 @@ void ShapeBase::buildConvex(const Box3F& box, Convex* convex)
    if (realBox.isOverlapped(getObjBox()) == false)
       return;
 
-   for (U32 i = 0; i < mDataBlock->collisionDetails.size(); i++)
+   for (U32 i = 0; i < mDataBlock->collisionDetails[mActiveCollisionset].size(); i++)
    {
-         Box3F newbox = mDataBlock->collisionBounds[i];
+         Box3F newbox = mDataBlock->collisionBounds[mActiveCollisionset][i];
          newbox.minExtents.convolve(mObjScale);
          newbox.maxExtents.convolve(mObjScale);
          mObjToWorld.mul(newbox);
@@ -3079,12 +3201,11 @@ void ShapeBase::buildConvex(const Box3F& box, Convex* convex)
          cp->mObject    = this;
          cp->pShapeBase = this;
          cp->hullId     = i;
-         cp->box        = mDataBlock->collisionBounds[i];
+         cp->box        = mDataBlock->collisionBounds[mActiveCollisionset][i];
          cp->transform = 0;
          cp->findNodeTransform();
    }
 }
-
 
 //----------------------------------------------------------------------------
 
@@ -3244,7 +3365,7 @@ U32 ShapeBase::packUpdate(NetConnection *con, U32 mask, BitStream *stream)
    }
 
    if(!stream->writeFlag(mask & (NameMask | DamageMask | SoundMask | MeshHiddenMask |
-         ThreadMask | ImageMask | CloakMask | SkinMask)))
+         ThreadMask | ImageMask | SkinMask | LinkMask)))
       return retMask;
 
    if (stream->writeFlag(mask & DamageMask)) {
@@ -3314,13 +3435,10 @@ U32 ShapeBase::packUpdate(NetConnection *con, U32 mask, BitStream *stream)
    }
 
    // Group some of the uncommon stuff together.
-   if (stream->writeFlag(mask & (NameMask | CloakMask | SkinMask | MeshHiddenMask ))) {
+   if (stream->writeFlag(mask & (NameMask | FadeMask | SkinMask | MeshHiddenMask ))) {
          
-      if (stream->writeFlag(mask & CloakMask))
+      if (stream->writeFlag(mask & FadeMask))
       {
-         // cloaking
-         stream->writeFlag( mCloaked );
-
          // piggyback control update
          stream->writeFlag(bool(getControllingClient()));
 
@@ -3337,12 +3455,42 @@ U32 ShapeBase::packUpdate(NetConnection *con, U32 mask, BitStream *stream)
       }
 
       if ( stream->writeFlag( mask & MeshHiddenMask ) )
+      {
+         stream->write(mActiveCollisionset);
          stream->writeBits( mMeshHidden );
+      }
 
       if (stream->writeFlag(mask & SkinMask))
          con->packNetStringHandleU(stream, mSkinNameHandle);
    }
 
+   if (stream->writeFlag(mask & LinkMask))
+   {
+      ShapeBase* ptr;
+
+      if (Sim::findObject(mObjectLinkId, ptr))
+      {
+         mObjectLink = ptr;
+         // Potentially have to write this to the client, let's make sure it has a
+         //  ghost on the other side...
+         S32 ghostIndex = con->getGhostIndex(mObjectLink);
+         if (stream->writeFlag(ghostIndex != -1))
+         {
+            stream->writeRangedU32(U32(ghostIndex),
+               0,
+               NetConnection::MaxGhostCount);
+            stream->writeInt(mLinkType,8);
+         }
+         else
+         {
+            retMask |= LinkMask;
+         }
+      }
+      else
+      {
+         stream->writeFlag(false);
+      }
+   }
    return retMask;
 }
 
@@ -3355,7 +3503,7 @@ void ShapeBase::unpackUpdate(NetConnection *con, BitStream *stream)
       return;
 
    if (stream->readFlag()) {
-      mDamage = mClampF(stream->readFloat(DamageLevelBits) * mDataBlock->maxDamage, 0.f, mDataBlock->maxDamage);
+      mDamage = mClampF(stream->readFloat(DamageLevelBits) * mDataBlock->maxDamage, 0.f, mDataBlock->maxDamage *2);
       DamageState prevState = mDamageState;
       mDamageState = DamageState(stream->readInt(NumDamageStateBits));
       stream->readNormalVector( &damageDir, 8 );
@@ -3522,11 +3670,8 @@ void ShapeBase::unpackUpdate(NetConnection *con, BitStream *stream)
 
    if (stream->readFlag())
    {
-      if(stream->readFlag())     // CloakMask and control
+      if(stream->readFlag())     // FadeMask and control
       {
-         // Read cloaking state.
-         
-         setCloakedState(stream->readFlag());
          mIsControlled = stream->readFlag();
 
          if (( mFading = stream->readFlag()) == true) {
@@ -3548,6 +3693,7 @@ void ShapeBase::unpackUpdate(NetConnection *con, BitStream *stream)
       
       if ( stream->readFlag() ) // MeshHiddenMask
       {
+         stream->read(&mActiveCollisionset);
          stream->readBits( &mMeshHidden );
          _updateHiddenMeshes();
       }
@@ -3562,38 +3708,23 @@ void ShapeBase::unpackUpdate(NetConnection *con, BitStream *stream)
          }
       }
    }
-}
 
+   if (stream->readFlag())
+   {
+      if (stream->readFlag())
+      {
+         mObjectLinkId = stream->readRangedU32(0, NetConnection::MaxGhostCount);
 
-//--------------------------------------------------------------------------
-
-void ShapeBase::forceUncloak(const char * reason)
-{
-   AssertFatal(isServerObject(), "ShapeBase::forceUncloak: server only call");
-   if(!mCloaked)
-      return;
-
-   mDataBlock->onForceUncloak_callback( this, reason ? reason : "" );
-}
-
-void ShapeBase::setCloakedState(bool cloaked)
-{
-   if (cloaked == mCloaked)
-      return;
-
-   if (isServerObject())
-      setMaskBits(CloakMask);
-
-   // Have to do this for the client, if we are ghosted over in the initial
-   //  packet as cloaked, we set the state immediately to the extreme
-   if (isProperlyAdded() == false) {
-      mCloaked = cloaked;
-      if (mCloaked)
-         mCloakLevel = 1.0;
+         NetObject* pObject = con->resolveGhost(mObjectLinkId);
+         if (pObject != NULL)
+            mObjectLink = dynamic_cast<ShapeBase*>(pObject);
+         mLinkType = stream->readInt(8);
+      }
       else
-         mCloakLevel = 0.0;
-   } else {
-      mCloaked = cloaked;
+      {
+         mObjectLinkId = -1;
+         mObjectLink = NULL;
+      }
    }
 }
 
@@ -3617,10 +3748,12 @@ void ShapeBase::setHidden( bool hidden )
 
 void ShapeBaseConvex::findNodeTransform()
 {
-   S32 dl = pShapeBase->mDataBlock->collisionDetails[hullId];
+    S32 dl = pShapeBase->mDataBlock->collisionDetails[pShapeBase->getActiveCollision()][hullId];
 
    TSShapeInstance* si = pShapeBase->getShapeInstance();
    TSShape* shape = si->getShape();
+
+   if (shape->details.size() <= dl) return;
 
    const TSShape::Detail* detail = &shape->details[dl];
    const S32 subs = detail->subShapeNum;
@@ -3633,8 +3766,9 @@ void ShapeBaseConvex::findNodeTransform()
    for (S32 i = start; i < end; i++) 
    {
       const TSShape::Object* obj = &shape->objects[i];
-      if (obj->numMeshes && detail->objectDetailNum < obj->numMeshes) 
+      if (obj->numMeshes && detail->objectDetailNum < obj->numMeshes && (obj->nodeIndex>-1))
       {
+         if (obj->nodeIndex>0)
          nodeTransform = &si->mNodeTransforms[obj->nodeIndex];
          return;
       }
@@ -3677,7 +3811,7 @@ Box3F ShapeBaseConvex::getBoundingBox(const MatrixF& mat, const Point3F& scale) 
 Point3F ShapeBaseConvex::support(const VectorF& v) const
 {
    TSShape::ConvexHullAccelerator* pAccel =
-      pShapeBase->mShapeInstance->getShape()->getAccelerator(pShapeBase->mDataBlock->collisionDetails[hullId]);
+      pShapeBase->mShapeInstance->getShape()->getAccelerator(pShapeBase->mDataBlock->collisionDetails[pShapeBase->getActiveCollision()][hullId]);
    AssertFatal(pAccel != NULL, "Error, no accel!");
 
    F32 currMaxDP = mDot(pAccel->vertexList[0], v);
@@ -3693,14 +3827,13 @@ Point3F ShapeBaseConvex::support(const VectorF& v) const
    return pAccel->vertexList[index];
 }
 
-
 void ShapeBaseConvex::getFeatures(const MatrixF& mat, const VectorF& n, ConvexFeature* cf)
 {
    cf->material = 0;
    cf->object = mObject;
 
    TSShape::ConvexHullAccelerator* pAccel =
-      pShapeBase->mShapeInstance->getShape()->getAccelerator(pShapeBase->mDataBlock->collisionDetails[hullId]);
+      pShapeBase->mShapeInstance->getShape()->getAccelerator(pShapeBase->mDataBlock->collisionDetails[pShapeBase->getActiveCollision()][hullId]);
    AssertFatal(pAccel != NULL, "Error, no accel!");
 
    F32 currMaxDP = mDot(pAccel->vertexList[0], n);
@@ -3747,9 +3880,12 @@ void ShapeBaseConvex::getPolyList(AbstractPolyList* list)
 {
    list->setTransform(&pShapeBase->getTransform(), pShapeBase->getScale());
    list->setObject(pShapeBase);
-
-   pShapeBase->mShapeInstance->animate(pShapeBase->mDataBlock->collisionDetails[hullId]);
-   pShapeBase->mShapeInstance->buildPolyList(list,pShapeBase->mDataBlock->collisionDetails[hullId]);
+   Vector<S32> collisionLOD = pShapeBase->mDataBlock->collisionDetails[pShapeBase->getActiveCollision()];
+   if (collisionLOD.size())
+   {
+	   pShapeBase->mShapeInstance->animate(collisionLOD[hullId]);
+	   pShapeBase->mShapeInstance->buildPolyList(list,collisionLOD[hullId]);
+   }
 }
 
 
@@ -3766,7 +3902,7 @@ bool ShapeBase::isInvincible()
 
 void ShapeBase::startFade( F32 fadeTime, F32 fadeDelay, bool fadeOut )
 {
-   setMaskBits(CloakMask);
+   setMaskBits(FadeMask);
    mFadeElapsedTime = 0;
    mFading = true;
    if(fadeDelay < 0)
@@ -3868,7 +4004,6 @@ void ShapeBase::setTransform(const MatrixF & mat)
       EnvVolume::updateObject(this);
    }
 }
-
 // AFX CODE BLOCK (collision-events) <<
 void ShapeBase::notifyCollisionCallbacks(SceneObject* obj, const VectorF& vel)
 {
@@ -4837,38 +4972,6 @@ DefineEngineMethod( ShapeBase, getControllingObject, S32, (),,
    return 0;
 }
 
-DefineEngineMethod( ShapeBase, canCloak, bool, (),,
-   "@brief Check if this object can cloak.\n\n"
-   "@return true\n"
-   
-   "@note Not implemented as it always returns true.")
-{
-   return true;
-}
-
-DefineEngineMethod( ShapeBase, setCloaked, void, ( bool cloak ),,
-   "@brief Set the cloaked state of this object.\n\n"
-
-   "When an object is cloaked it is not rendered.\n"
-
-   "@param cloak true to cloak the object, false to uncloak\n"
-   
-   "@see isCloaked()\n")
-{
-   if (object->isServerObject())
-      object->setCloakedState( cloak );
-}
-
-DefineEngineMethod( ShapeBase, isCloaked, bool, (),,
-   "@brief Check if this object is cloaked.\n\n"
-
-   "@return true if cloaked, false if not\n" 
-   
-   "@see setCloaked()\n")
-{
-   return object->getCloakedState();
-}
-
 DefineEngineMethod( ShapeBase, setDamageFlash, void, ( F32 level ),,
    "@brief Set the damage flash level.\n\n"
 
@@ -5056,9 +5159,6 @@ void ShapeBase::consoleInit()
       "is always corrected.  Between FullCorrectionDistance and the player, the weapon's muzzle vector is adjusted so that "
       "the closer the aim point is to the player, the closer the muzzle vector is to the true (non-corrected) one.\n"
 	   "@ingroup gameObjects\n");
-   Con::addVariable("SB::CloakSpeed", TypeF32, &sCloakSpeed, 
-      "@brief Time to cloak, in seconds.\n\n"
-	   "@ingroup gameObjects\n");
 }
 
 void ShapeBase::_updateHiddenMeshes()
@@ -5165,6 +5265,24 @@ DefineEngineMethod( ShapeBase, dumpMeshVisibility, void, (),,
 }
 
 #endif // #ifndef TORQUE_SHIPPING
+
+void ShapeBase::setActiveCollision(S32 _ActiveCollisionset)
+{
+    if ((_ActiveCollisionset >= 0)&&(_ActiveCollisionset < mDataBlock->mColSets))
+        mActiveCollisionset = _ActiveCollisionset;
+    else
+    {
+        Con::errorf("Attempting to set an active collision lod for object %s outside of range. Tried: %i, Max: %i",mDataBlock->getName(), _ActiveCollisionset,mDataBlock->mColSets);
+        mActiveCollisionset = mDataBlock->mColSets;
+    }
+   setMaskBits( MeshHiddenMask );
+}
+
+DefineEngineMethod( ShapeBase, setActiveCollision, void, ( S8 activeColset ),,
+   "@brief Set the active collision detail chain\n\n")
+{
+   object->setActiveCollision(U8(activeColset));
+}
 
 //------------------------------------------------------------------------
 //These functions are duplicated in tsStatic and shapeBase.
@@ -5493,3 +5611,96 @@ void ShapeBase::setSelectionFlags(U8 flags)
    }  
 }
 // AFX CODE BLOCK (selection-highlight) >>
+
+//----------------------------------------------------------------------------
+
+void ShapeBase::updateDamageFX(F32 dt)
+{
+
+   for (S32 j = ShapeBaseData::DAMAGE_LEVELS - 1; j >= 0; j--)
+   {
+      F32 damagePercent = mDamage / mDataBlock->maxDamage;
+      if (damagePercent >= mDataBlock->mDamageLevelTolerance[j])
+      {
+         for (S32 i = 0; i<mDataBlock->mNumDmgEmitterAreas; i++)
+         {
+            MatrixF trans = getTransform();
+            Point3F offset = mDataBlock->mDamageEmitterOffset[i];
+            trans.mulP(offset);
+            Point3F emitterPoint = offset;
+
+            if (pointInWater(offset))
+            {
+               U32 emitterOffset = ShapeBaseData::DAMAGE_LEVELS-1;
+               if (mDamageEmitterList[emitterOffset])
+               {
+                  mDamageEmitterList[emitterOffset]->emitParticles(emitterPoint, emitterPoint, Point3F(0.0, 0.0, 1.0), getVelocity(), (U32)(dt * 1000));
+               }
+            }
+            else
+            {
+               if (mDamageEmitterList[j])
+               {
+                  mDamageEmitterList[j]->emitParticles(emitterPoint, emitterPoint, Point3F(0.0, 0.0, 1.0), getVelocity(), (U32)(dt * 1000));
+               }
+            }
+         }
+      }
+   }
+
+}
+
+Point3F ShapeBase::getNodePosition(const String &nodeName) const
+{
+   S32 nodeIdx = mShapeInstance->getShape()->findNode(nodeName);
+
+   return getNodePosition(nodeIdx);
+}
+
+Point3F ShapeBase::getNodePosition(const S32 nodeIdx) const
+{
+   Point3F nodeObjPos, nodeWorldPos;
+
+   if(nodeIdx == -1)
+      nodeObjPos.set(0.0f, 0.0f, 0.0f);
+   else
+   {
+      if (isServerObject() && mShapeInstance)
+         mShapeInstance->animateNodeSubtrees(true);
+   
+      mShapeInstance->mNodeTransforms[nodeIdx].getColumn(3, &nodeObjPos);
+   }
+
+   const Point3F& scale = getScale();
+   nodeObjPos.convolve( scale );
+   getTransform().mulP(nodeObjPos, &nodeWorldPos);
+
+   return nodeWorldPos;
+}
+
+
+ConsoleMethod( ShapeBase, getNodePosition, const char*, 3, 3, "(string nodeName)"
+              "returns the world space position of the named node")
+{
+   char *returnBuffer = Con::getReturnBuffer(256);
+   Point3F nodePos = object->getNodePosition(argv[2].getSignedIntValue());
+   dSprintf(returnBuffer, 256, "%g %g %g", nodePos.x, nodePos.y, nodePos.z);
+   return returnBuffer;
+}
+
+
+//-----------------------------------------------------------------------------
+void ShapeBase::setMass( F32 mass )
+ {
+	if (mass<0.0001f)
+		mass = 0.0001f;
+	 mMass = mass;
+	 mOneOverMass = 1/mMass;
+	 setMaskBits(ScaleMask);
+}
+
+DefineEngineMethod( ShapeBase, setMass, void, (F32 mass), ,
+				   "Explicitly Sets the mass for a ShapeBase Object Instance. Note: Mass is recalculated based on the stock datablock when objects are mounted.")
+{
+	object->setMass(mass);
+}
