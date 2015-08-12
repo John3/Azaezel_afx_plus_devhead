@@ -195,6 +195,8 @@ ShapeBaseData::ShapeBaseData()
    mCRC( 0 )
 {      
    dMemset( mountPointNode, -1, sizeof( S32 ) * SceneObject::NumMountPoints );
+
+   for (int i=0; i< MaxHitboxes; i++) mHitMeshID[i] = -1;
 }
 
 struct ShapeBaseDataProto
@@ -386,6 +388,15 @@ bool ShapeBaseData::preload(bool server, String &errorStr)
                LOSDetails.push_back(i);
          }
       }
+	  
+	  //find the HitBox mesh
+	  //The hit box mesh is a convex mesh named Hitbox$DDD where DDD is the detail level, the same used for the model and $ is a number from 1 to 20
+	  for (i=0; i< MaxHitboxes; i++)
+	  {
+		  char buff[16];
+		  dSprintf(buff,sizeof(buff),"Hitbox%d",i+1);
+		  mHitMeshID[i] = mShape->findObject(buff);
+	  }
 
       debrisDetail = mShape->findDetail("Debris-17");
       eyeNode = mShape->findNode("eye");
@@ -507,7 +518,6 @@ void ShapeBaseData::initPersistFields()
          "Drag factor.\nReduces velocity of moving objects." );
       addField( "density", TypeF32, Offset(density, ShapeBaseData),
          "Shape density.\nUsed when computing buoyancy when in water.\n" );
-
    endGroup( "Physics" );
 
    addGroup( "Damage/Energy" );
