@@ -449,23 +449,6 @@ public:
 
 private:
    static const U32 MAX_GAMEPADS = 4; ///< The maximum number of supported gamepads
-<<<<<<< HEAD
-=======
-
-#ifdef TORQUE_DEMO_PURCHASE
-private:
-   PurchaseScreen* mPurchaseScreen;
-   U32             mLastPurchaseHideTime;
-
-public:
-   void showPurchaseScreen(bool show, bool startBlocker, const char* location, bool doExit);
-   void updatePurchaseScreen(const char* value);
-#endif
-
-#ifdef TORQUE_DEMO_TIMEOUT
-private:
-   void checkTimeOut();
-#endif
 
   // AFX CODE BLOCK (canvas) <<
   protected:
@@ -476,7 +459,6 @@ private:
      void setConsumeLastInputEvent(bool flag) { mConsumeLastInputEvent = flag; }
      bool getLastCursorPoint(Point2I& pt) const { pt = mLastCursorPt; return mLastCursorEnabled; }
   // AFX CODE BLOCK (canvas) >>
->>>>>>> afx_alts
 };
 
 #endif
