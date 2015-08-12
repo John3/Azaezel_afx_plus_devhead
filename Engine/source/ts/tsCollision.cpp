@@ -1753,7 +1753,7 @@ bool TSMesh::castRayOpcode( const Point3F &s, const Point3F &e, RayInfo *info, T
          }
 
          // done!
-         info->texCoord.set(s[sv], s[tv]);
+         info->mUVtexCoord.set(s[sv], s[tv]);
 
       }
 
