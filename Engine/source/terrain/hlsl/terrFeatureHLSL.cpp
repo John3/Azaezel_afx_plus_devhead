@@ -48,10 +48,7 @@ namespace
       FEATUREMGR->registerFeature( MFT_TerrainMacroMap, new TerrainMacroMapFeatHLSL );
       FEATUREMGR->registerFeature( MFT_TerrainLightMap, new TerrainLightMapFeatHLSL );
       FEATUREMGR->registerFeature( MFT_TerrainSideProject, new NamedFeatureHLSL( "Terrain Side Projection" ) );
-      FEATUREMGR->registerFeature( MFT_TerrainAdditive, new TerrainAdditiveFeatHLSL );     
-      FEATUREMGR->registerFeature( MFT_DeferredTerrainBaseMap, new TerrainBaseMapFeatHLSL );
-      FEATUREMGR->registerFeature( MFT_DeferredTerrainMacroMap, new TerrainMacroMapFeatHLSL );
-      FEATUREMGR->registerFeature( MFT_DeferredTerrainDetailMap, new TerrainDetailMapFeatHLSL );
+      FEATUREMGR->registerFeature( MFT_TerrainAdditive, new TerrainAdditiveFeatHLSL );  
       FEATUREMGR->registerFeature( MFT_DeferredTerrainBlankInfoMap, new TerrainBlankInfoMapFeatHLSL );
    }
 };
@@ -291,7 +288,7 @@ ShaderFeature::Resources TerrainBaseMapFeatHLSL::getResources( const MaterialFea
 
 U32 TerrainBaseMapFeatHLSL::getOutputTargets( const MaterialFeatureData &fd ) const
 {
-   return fd.features[MFT_DeferredTerrainBaseMap] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
+   return fd.features[MFT_isDeferred] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
 }
 
 TerrainDetailMapFeatHLSL::TerrainDetailMapFeatHLSL()
@@ -486,13 +483,28 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
       if(fd.features.hasFeature( MFT_IsDXTnm, detailIndex ) )
       {
          meta->addStatement( new GenOp( "   @.xy += parallaxOffsetDxtnm( @, @.xy, @, @.z * @ );\r\n", 
-         inDet, normalMap, inDet, negViewTS, detailInfo, detailBlend ) );
+            inDet, normalMap, inDet, negViewTS, detailInfo, detailBlend ) );
       }
       else
       {
          meta->addStatement( new GenOp( "   @.xy += parallaxOffset( @, @.xy, @, @.z * @ );\r\n", 
             inDet, normalMap, inDet, negViewTS, detailInfo, detailBlend ) );
       }
+   }
+   
+   // Check to see if we have a gbuffer normal.
+   Var *gbNormal = (Var*)LangElement::find( "gbNormal" );
+   // If we have a gbuffer normal and we don't have a
+   // normal map feature then we need to lerp in a
+   // default normal else the normals below this layer
+   // will show thru.
+   if (gbNormal &&
+      !fd.features.hasFeature(MFT_TerrainNormalMap, detailIndex))
+   {
+      Var *viewToTangent = getInViewToTangent(componentList);
+
+      meta->addStatement(new GenOp("   @ = lerp( @, tGetMatrix3Row(@, 2), min( @, @.w ) );\r\n",
+         gbNormal, gbNormal, viewToTangent, detailBlend, inDet));
    }
 
    Var *detailColor = (Var*)LangElement::find( "detailColor" ); 
@@ -552,7 +564,7 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
 
    ShaderFeature::OutputTarget target = ShaderFeature::DefaultTarget;
 
-   if(fd.features.hasFeature( MFT_DeferredTerrainDetailMap ))
+   if (fd.features.hasFeature(MFT_isDeferred))
       target= ShaderFeature::RenderTarget1;
 
    Var *outColor = (Var*)LangElement::find( getOutputTargetVarName(target) );
@@ -599,7 +611,7 @@ ShaderFeature::Resources TerrainDetailMapFeatHLSL::getResources( const MaterialF
 
 U32 TerrainDetailMapFeatHLSL::getOutputTargets( const MaterialFeatureData &fd ) const
 {
-   return fd.features[MFT_DeferredTerrainDetailMap] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
+   return fd.features[MFT_isDeferred] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
 }
 
 
@@ -758,28 +770,21 @@ void TerrainMacroMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentL
 
    // Add to the blend total.
    meta->addStatement( new GenOp( "   @ += @;\r\n", blendTotal, detailBlend ) );
-
-   // If this is a prepass then we skip color.
-   if ( fd.features.hasFeature( MFT_PrePassConditioner ) )
+   
+   // Check to see if we have a gbuffer normal.
+   Var *gbNormal = (Var*)LangElement::find( "gbNormal" );
+   
+   // If we have a gbuffer normal and we don't have a
+   // normal map feature then we need to lerp in a 
+   // default normal else the normals below this layer
+   // will show thru.
+   if (  gbNormal && 
+      !fd.features.hasFeature( MFT_TerrainNormalMap, detailIndex ) )
    {
-      // Check to see if we have a gbuffer normal.
-      Var *gbNormal = (Var*)LangElement::find( "gbNormal" );
-
-      // If we have a gbuffer normal and we don't have a
-      // normal map feature then we need to lerp in a 
-      // default normal else the normals below this layer
-      // will show thru.
-      if (  gbNormal && 
-            !fd.features.hasFeature( MFT_TerrainNormalMap, detailIndex ) )
-      {
-         Var *viewToTangent = getInViewToTangent( componentList );
-
-         meta->addStatement( new GenOp( "   @ = lerp( @, @[2], min( @, @.w ) );\r\n", 
-            gbNormal, gbNormal, viewToTangent, detailBlend, inDet ) );
-      }
-
-      output = meta;
-      return;
+      Var *viewToTangent = getInViewToTangent( componentList );
+      
+      meta->addStatement( new GenOp( "   @ = lerp( @, @[2], min( @, @.w ) );\r\n", 
+         gbNormal, gbNormal, viewToTangent, detailBlend, inDet ) );
    }
 
    Var *detailColor = (Var*)LangElement::find( "macroColor" ); 
@@ -831,7 +836,7 @@ void TerrainMacroMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentL
 
    ShaderFeature::OutputTarget target = ShaderFeature::DefaultTarget;
 
-   if(fd.features.hasFeature(MFT_DeferredTerrainMacroMap))
+   if (fd.features.hasFeature(MFT_isDeferred))
       target= ShaderFeature::RenderTarget1;
 
    Var *outColor = (Var*)LangElement::find( getOutputTargetVarName(target) );
@@ -866,7 +871,7 @@ ShaderFeature::Resources TerrainMacroMapFeatHLSL::getResources( const MaterialFe
 
 U32 TerrainMacroMapFeatHLSL::getOutputTargets( const MaterialFeatureData &fd ) const
 {
-   return fd.features[MFT_DeferredTerrainMacroMap] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
+   return fd.features[MFT_isDeferred] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
 }
 
 void TerrainNormalMapFeatHLSL::processVert(  Vector<ShaderComponent*> &componentList, 
@@ -964,20 +969,14 @@ void TerrainNormalMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
 ShaderFeature::Resources TerrainNormalMapFeatHLSL::getResources( const MaterialFeatureData &fd )
 {
    Resources res;
-
-   // We only need to process normals during the prepass.
-   if ( fd.features.hasFeature( MFT_PrePassConditioner ) )
-   {
-      // If this is the first normal map and there
-      // are no parallax features then we will 
-      // generate the worldToTanget transform.
-      if (  !fd.features.hasFeature( MFT_TerrainParallaxMap ) &&
-            ( getProcessIndex() == 0 || !fd.features.hasFeature( MFT_TerrainNormalMap, getProcessIndex() - 1 ) ) )
-         res.numTexReg = 3;
-
-      res.numTex = 1;
-   }
-
+   
+   // If this is the first normal map and there
+   // are no parallax features then we will 
+   // generate the worldToTanget transform.
+   if (  !fd.features.hasFeature( MFT_TerrainParallaxMap ) &&
+      ( getProcessIndex() == 0 || !fd.features.hasFeature( MFT_TerrainNormalMap, getProcessIndex() - 1 ) ) )
+      res.numTexReg = 3;
+   res.numTex = 1;
    return res;
 }
 
@@ -1026,11 +1025,7 @@ ShaderFeature::Resources TerrainLightMapFeatHLSL::getResources( const MaterialFe
 void TerrainAdditiveFeatHLSL::processPix( Vector<ShaderComponent*> &componentList, 
                                           const MaterialFeatureData &fd )
 {
-   Var *color = NULL;
-   if (fd.features[MFT_DeferredTerrainDetailMap])
-       color = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::RenderTarget1) );
-   else
-       color = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::DefaultTarget) );
+   Var *color = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::DefaultTarget) );
 
    Var *blendTotal = (Var*)LangElement::find( "blendTotal" );
    if ( !color || !blendTotal )
@@ -1052,7 +1047,7 @@ void TerrainAdditiveFeatHLSL::processPix( Vector<ShaderComponent*> &componentLis
 
 U32 TerrainBlankInfoMapFeatHLSL::getOutputTargets(const MaterialFeatureData &fd) const
 {
-   return fd.features[MFT_DeferredTerrainBaseMap] ? ShaderFeature::RenderTarget2 : ShaderFeature::RenderTarget1;
+   return fd.features[MFT_isDeferred] ? ShaderFeature::RenderTarget2 : ShaderFeature::RenderTarget1;
 }
 
 void TerrainBlankInfoMapFeatHLSL::processPix(Vector<ShaderComponent*> &componentList,

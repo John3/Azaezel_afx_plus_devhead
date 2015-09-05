@@ -49,7 +49,7 @@ LangElement * ShaderFeatureGLSL::setupTexSpaceMat( Vector<ShaderComponent*> &, /
    (*texSpaceMat)->setName( "objToTangentSpace" );
 
    MultiLine * meta = new MultiLine;
-   meta->addStatement( new GenOp( "   @;\r\n", new DecOp( *texSpaceMat ) ) );
+   meta->addStatement( new GenOp( "   @ = float3x3(1,0,0, 0,1,0, 0,0,1);\r\n", new DecOp( *texSpaceMat ) ) );
    
    // Protect against missing normal and tangent.
    if ( !N || !T )
@@ -1876,9 +1876,9 @@ void ReflectCubeFeatGLSL::processPix(  Vector<ShaderComponent*> &componentList,
    Var* matinfo = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::RenderTarget2) );
    Var *smoothness = (Var*)LangElement::find("smoothness");
    if (smoothness) //try to grab smoothness directly
-      texCube = new GenOp("textureLod(  @, @, min((1.0 - @)*9.0 + 3.0, 8.0))", cubeMap, reflectVec, smoothness);
+      texCube = new GenOp("textureLod(  @, @, min((1.0 - @)*11.0 + 1.0, 8.0))", cubeMap, reflectVec, smoothness);
    else if (glossColor) //failing that, try and find color data
-      texCube = new GenOp("textureLod( @, @, min((1.0 - @.b)*9.0 + 3.0, 8.0))", cubeMap, reflectVec, glossColor);
+      texCube = new GenOp("textureLod( @, @, min((1.0 - @.b)*11.0 + 1.0, 8.0))", cubeMap, reflectVec, glossColor);
    else //failing *that*, just draw the cubemap
       texCube = new GenOp("texture( @, @)", cubeMap, reflectVec);
    LangElement *lerpVal = NULL;
@@ -1908,9 +1908,10 @@ void ReflectCubeFeatGLSL::processPix(  Vector<ShaderComponent*> &componentList,
       else
          blendOp = Material::Mul;
    }
+   
+   Var* targ = (Var*)LangElement::find(getOutputTargetVarName(ShaderFeature::RenderTarget3));
    if (fd.features[MFT_isDeferred])
    {
-      Var* targ = (Var*)LangElement::find(getOutputTargetVarName(ShaderFeature::RenderTarget3));
       //metalness: black(0) = color, white(1) = reflection
       if (fd.features[MFT_ToneMap])
          meta->addStatement(new GenOp("   @ *= vec4(pow(@,vec4(2.2)));\r\n", targ, texCube));
@@ -1919,7 +1920,7 @@ void ReflectCubeFeatGLSL::processPix(  Vector<ShaderComponent*> &componentList,
    }
    else
    {
-      Var* targ = (Var*)LangElement::find(getOutputTargetVarName(ShaderFeature::DefaultTarget));
+      targ = (Var*)LangElement::find(getOutputTargetVarName(ShaderFeature::DefaultTarget));
       Var *metalness = (Var*)LangElement::find("metalness");
       if (metalness)
       {
@@ -1930,6 +1931,8 @@ void ReflectCubeFeatGLSL::processPix(  Vector<ShaderComponent*> &componentList,
       else
          meta->addStatement(new GenOp("   @.rgb *= @.rgb;\r\n", targ, texCube));
    }
+   if (fd.features[MFT_StaticCubemap]) //dynamic reflections are linearized coming and going. so do statics twice
+      meta->addStatement(new GenOp("   @ = vec4(pow(@,vec4(2.2)));\r\n", targ, targ));
    output = meta;
 }
 

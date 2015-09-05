@@ -269,17 +269,20 @@ void RenderPrePassMgr::addElement( RenderInst *inst )
    if ( isMeshInst || isDecalMeshInst )
       matInst = static_cast<MeshRenderInst*>(inst)->matInst;
 
-   // If its a custom material and it refracts... skip it.
-   if (  matInst && 
-         matInst->isCustomMaterial() &&
-         static_cast<CustomMaterial*>( matInst->getMaterial() )->mRefract )
-      return;
-
-   // Make sure we got a prepass material.
-   if ( matInst )
+   if (matInst)
    {
-      matInst = getPrePassMaterial( matInst );
-      if ( !matInst || !matInst->isValid() )
+      // Skip decals if they don't have normal maps.
+      if (isDecalMeshInst && !matInst->hasNormalMap())
+         return;
+
+      // If its a custom material and it refracts... skip it.
+      if (matInst->isCustomMaterial() &&
+         static_cast<CustomMaterial*>(matInst->getMaterial())->mRefract)
+         return;
+
+      // Make sure we got a prepass material.
+      matInst = getPrePassMaterial(matInst);
+      if (!matInst || !matInst->isValid())
          return;
    }
 
@@ -304,7 +307,7 @@ void RenderPrePassMgr::addElement( RenderInst *inst )
    elem.key = *((U32*)&invSortDistSq);
 
    // Next sort by pre-pass material if its a mesh... use the original sort key.
-   if ( isMeshInst )
+   if (isMeshInst && matInst)
       elem.key2 = matInst->getStateHint();
    else
       elem.key2 = originalKey;
@@ -641,9 +644,10 @@ void ProcessedPrePassMaterial::_determineFeatures( U32 stageNum,
    newFeatures.addFeature( MFT_DiffuseColor );
 
    if (mMaterial->mFlipRB[stageNum])
-   {
       newFeatures.addFeature(MFT_FlipRB);
-   }
+
+   if (mMaterial->mInvertSmoothness[stageNum])
+      newFeatures.addFeature(MFT_InvertSmoothness);
 
    // Deferred Shading : Specular
    if( mStages[stageNum].getTex( MFT_SpecularMap ) )
@@ -768,11 +772,12 @@ void ProcessedPrePassMaterial::_determineFeatures( U32 stageNum,
    if (!mMaterial->mEmissive[stageNum] && test && (test->getTypeMask() & (DynamicShapeObjectType | StaticObjectType | StaticShapeObjectType)))
       envmapped = true;
    // cubemaps only available on stage 0 for now - bramage   
-   if ( stageNum < 1 && 
+   if ( stageNum < 1 &&
          (  (  mMaterial->mCubemapData && mMaterial->mCubemapData->mCubemap ) ||
-               mMaterial->mDynamicCubemap ) ||
-               mMaterial->mDynamicCubemap || envmapped)
+               mMaterial->mDynamicCubemap || envmapped) )
    {
+      if (!mMaterial->mDynamicCubemap)
+         fd.features.addFeature(MFT_StaticCubemap);
       newFeatures.addFeature( MFT_CubeMap );
       newFeatures.removeFeature(MFT_UseInstancing);
    }

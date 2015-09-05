@@ -284,9 +284,10 @@ void ProcessedShaderMaterial::_determineFeatures(  U32 stageNum,
    // First we add all the features which the 
    // material has defined.
    if (mMaterial->mFlipRB[stageNum])
-   {
       fd.features.addFeature(MFT_FlipRB);
-   }
+
+   if (mMaterial->mInvertSmoothness[stageNum])
+      fd.features.addFeature(MFT_InvertSmoothness);
 
    if ( mMaterial->isTranslucent() )
    {
@@ -355,6 +356,7 @@ void ProcessedShaderMaterial::_determineFeatures(  U32 stageNum,
    //if (features.hasFeature(MFT_SkyBox))
    if (mMaterial->mIsSky)
    {
+      fd.features.addFeature(MFT_StaticCubemap);
       fd.features.addFeature(MFT_CubeMap);
       fd.features.addFeature(MFT_SkyBox);
    }
@@ -390,8 +392,7 @@ void ProcessedShaderMaterial::_determineFeatures(  U32 stageNum,
    // cannot do on SM 2.0 and below.
    if ( shaderVersion > 2.0f )
    {
-      // Only allow parallax if we have a normal map and
-      // we're not using DXTnm compression.
+
       if (  mMaterial->mParallaxScale[stageNum] > 0.0f &&
          fd.features[ MFT_NormalMap ] )
          fd.features.addFeature( MFT_Parallax );

@@ -352,12 +352,12 @@ bool TerrainCellMaterial::_createPass( Vector<MaterialInfo*> *materials,
    {
       FeatureSet features;
       features.addFeature( MFT_VertTransform );
+      features.addFeature( MFT_TerrainBaseMap );
 
       if ( prePassMat )
       {
          features.addFeature( MFT_EyeSpaceDepthOut );
          features.addFeature( MFT_PrePassConditioner );
-         features.addFeature( MFT_DeferredTerrainBaseMap );
          features.addFeature(MFT_isDeferred);
 
          if ( advancedLightmapSupport )
@@ -365,7 +365,6 @@ bool TerrainCellMaterial::_createPass( Vector<MaterialInfo*> *materials,
       }
       else
       {
-         features.addFeature( MFT_TerrainBaseMap );
          features.addFeature( MFT_RTLighting );
          // The HDR feature is always added... it will compile out
          // if HDR is not enabled in the engine.
@@ -384,7 +383,7 @@ bool TerrainCellMaterial::_createPass( Vector<MaterialInfo*> *materials,
 
       // The additional passes need to be lerp blended into the
       // target to maintain the results of the previous passes.
-      if ( !firstPass )
+      if (!firstPass && prePassMat)
          features.addFeature( MFT_TerrainAdditive );
 
       normalMaps.clear();
@@ -412,14 +411,12 @@ bool TerrainCellMaterial::_createPass( Vector<MaterialInfo*> *materials,
          if (  !(mat->getMacroSize() <= 0 || mat->getMacroDistance() <= 0 || mat->getMacroMap().isEmpty() ) )
          {
             if(prePassMat)
-               features.addFeature( MFT_DeferredTerrainMacroMap, featureIndex );
-            else
+               features.addFeature(MFT_isDeferred, featureIndex);
 	         features.addFeature( MFT_TerrainMacroMap, featureIndex );
          }
 
          if(prePassMat)
-             features.addFeature( MFT_DeferredTerrainDetailMap, featureIndex );
-         else
+            features.addFeature(MFT_isDeferred, featureIndex);
          features.addFeature( MFT_TerrainDetailMap, featureIndex );
 
          pass->materials.push_back( (*materials)[i] );
@@ -560,9 +557,7 @@ bool TerrainCellMaterial::_createPass( Vector<MaterialInfo*> *materials,
 
    desc.samplersDefined = true;
    if ( pass->baseTexMapConst->isValid() )
-   {
       desc.samplers[pass->baseTexMapConst->getSamplerRegister()] = GFXSamplerStateDesc::getWrapLinear();
-   }
 
    if ( pass->layerTexConst->isValid() )
       desc.samplers[pass->layerTexConst->getSamplerRegister()] = GFXSamplerStateDesc::getClampPoint();

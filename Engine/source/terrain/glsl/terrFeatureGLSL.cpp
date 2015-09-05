@@ -48,10 +48,7 @@ namespace
       FEATUREMGR->registerFeature( MFT_TerrainMacroMap, new TerrainMacroMapFeatGLSL );
       FEATUREMGR->registerFeature( MFT_TerrainLightMap, new TerrainLightMapFeatGLSL );
       FEATUREMGR->registerFeature( MFT_TerrainSideProject, new NamedFeatureGLSL( "Terrain Side Projection" ) );
-      FEATUREMGR->registerFeature( MFT_TerrainAdditive, new TerrainAdditiveFeatGLSL );     
-      FEATUREMGR->registerFeature( MFT_DeferredTerrainBaseMap, new TerrainBaseMapFeatGLSL );
-      FEATUREMGR->registerFeature( MFT_DeferredTerrainMacroMap, new TerrainMacroMapFeatGLSL );
-      FEATUREMGR->registerFeature( MFT_DeferredTerrainDetailMap, new TerrainDetailMapFeatGLSL ); 
+      FEATUREMGR->registerFeature( MFT_TerrainAdditive, new TerrainAdditiveFeatGLSL );
       FEATUREMGR->registerFeature( MFT_DeferredTerrainBlankInfoMap, new TerrainBlankInfoMapFeatGLSL );
    }
 
@@ -492,7 +489,7 @@ void TerrainDetailMapFeatGLSL::processPix(   Vector<ShaderComponent*> &component
    Var *baseColor = (Var*)LangElement::find("baseColor");
    ShaderFeature::OutputTarget target = ShaderFeature::DefaultTarget;
 
-   if(fd.features.hasFeature( MFT_DeferredTerrainDetailMap ))
+   if (fd.features.hasFeature(MFT_isDeferred))
       target= ShaderFeature::RenderTarget1;
 
    Var *outColor = (Var*)LangElement::find( getOutputTargetVarName(target) );
@@ -584,13 +581,29 @@ void TerrainDetailMapFeatGLSL::processPix(   Vector<ShaderComponent*> &component
       if (fd.features.hasFeature(MFT_IsDXTnm, detailIndex))
       {
          meta->addStatement(new GenOp("   @.xy += parallaxOffsetDxtnm( @, @.xy, @, @.z * @ );\r\n",
-            inDet, normalMap, inDet, negViewTS, detailInfo, detailBlend));
+         inDet, normalMap, inDet, negViewTS, detailInfo, detailBlend));
       }
       else
       {
          meta->addStatement(new GenOp("   @.xy += parallaxOffset( @, @.xy, @, @.z * @ );\r\n",
-            inDet, normalMap, inDet, negViewTS, detailInfo, detailBlend));
+         inDet, normalMap, inDet, negViewTS, detailInfo, detailBlend));
       }
+   }
+   
+   // Check to see if we have a gbuffer normal.
+   Var *gbNormal = (Var*)LangElement::find( "gbNormal" );
+   
+   // If we have a gbuffer normal and we don't have a
+   // normal map feature then we need to lerp in a 
+   // default normal else the normals below this layer
+   // will show thru.
+   if (gbNormal &&
+      !fd.features.hasFeature(MFT_TerrainNormalMap, detailIndex))
+   {
+      Var *viewToTangent = getInViewToTangent(componentList);
+
+      meta->addStatement(new GenOp("   @ = lerp( @, @[2], min( @, @.w ) );\r\n",
+         gbNormal, gbNormal, viewToTangent, detailBlend, inDet));
    }
 
    // If we're using SM 3.0 then take advantage of 
@@ -665,7 +678,7 @@ ShaderFeature::Resources TerrainDetailMapFeatGLSL::getResources( const MaterialF
 
 U32 TerrainDetailMapFeatGLSL::getOutputTargets( const MaterialFeatureData &fd ) const
 {
-   return fd.features[MFT_DeferredTerrainDetailMap] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
+   return fd.features[MFT_isDeferred] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
 }
 
 
@@ -872,7 +885,7 @@ void TerrainMacroMapFeatGLSL::processPix(   Vector<ShaderComponent*> &componentL
 
    ShaderFeature::OutputTarget target = ShaderFeature::DefaultTarget;
 
-   if(fd.features.hasFeature(MFT_DeferredTerrainMacroMap))
+   if (fd.features.hasFeature(MFT_isDeferred))
       target= ShaderFeature::RenderTarget1;
 
    Var *outColor = (Var*)LangElement::find( getOutputTargetVarName(target) );
@@ -909,7 +922,7 @@ ShaderFeature::Resources TerrainMacroMapFeatGLSL::getResources( const MaterialFe
 
 U32 TerrainMacroMapFeatGLSL::getOutputTargets( const MaterialFeatureData &fd ) const
 {
-   return fd.features[MFT_DeferredTerrainMacroMap] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
+   return fd.features[MFT_isDeferred] ? ShaderFeature::RenderTarget1 : ShaderFeature::DefaultTarget;
 }
 
 void TerrainNormalMapFeatGLSL::processVert(  Vector<ShaderComponent*> &componentList, 
@@ -1070,11 +1083,7 @@ ShaderFeature::Resources TerrainLightMapFeatGLSL::getResources( const MaterialFe
 void TerrainAdditiveFeatGLSL::processPix( Vector<ShaderComponent*> &componentList, 
                                           const MaterialFeatureData &fd )
 {
-   Var *color = NULL;
-   if (fd.features[MFT_DeferredTerrainDetailMap])
-       color = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::RenderTarget1) );
-   else
-       color = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::DefaultTarget) );
+   Var *color = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::DefaultTarget) );
 
    Var *blendTotal = (Var*)LangElement::find( "blendTotal" );
    if ( !color || !blendTotal )
