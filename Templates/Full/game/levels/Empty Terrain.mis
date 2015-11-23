@@ -12,7 +12,13 @@ new SimGroup(MissionGroup) {
       fogDensityOffset = "10";
       fogAtmosphereHeight = "100";
       canvasClearColor = "233 220 143 255";
-      advancedLightmapSupport = "0";
+      ambientLightBlendPhase = "1";
+      ambientLightBlendCurve = "0 0 -1 -1";
+      LevelEnvMap = "DesertSkyCubemap";
+      soundAmbience = "AudioAmbienceDefault";
+      soundDistanceModel = "Linear";
+      canSave = "1";
+      canSaveDynamicFields = "1";
          desc0 = "An empty terrain ready to be populated with Torque objects.";
          LevelName = "Empty Terrain";
    };
