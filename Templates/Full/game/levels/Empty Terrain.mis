@@ -1,7 +1,7 @@
 //--- OBJECT WRITE BEGIN ---
 new SimGroup(MissionGroup) {
    canSaveDynamicFields = "1";
-      enabled = "1";
+      Enabled = "1";
 
    new LevelInfo(theLevelInfo) {
       nearClip = "0.1";
@@ -11,7 +11,7 @@ new SimGroup(MissionGroup) {
       fogDensity = "0.001";
       fogDensityOffset = "10";
       fogAtmosphereHeight = "100";
-      canvasClearColor = "233 220 143 255";
+      canvasClearColor = "0 0 0 255";
       ambientLightBlendPhase = "1";
       ambientLightBlendCurve = "0 0 -1 -1";
       LevelEnvMap = "DesertSkyCubemap";
@@ -73,7 +73,7 @@ new SimGroup(MissionGroup) {
    };
    new SimGroup(PlayerDropPoints) {
       canSaveDynamicFields = "1";
-         enabled = "1";
+         Enabled = "1";
 
       new SpawnSphere() {
          autoSpawn = "0";
@@ -86,7 +86,7 @@ new SimGroup(MissionGroup) {
          rotation = "1 0 0 0";
          scale = "1 1 1";
          canSaveDynamicFields = "1";
-            enabled = "1";
+            Enabled = "1";
             homingCount = "0";
             lockCount = "0";
             TypeBool locked = "False";
