@@ -23,6 +23,7 @@
 #ifndef _TORQUE_HLSL_
 #define _TORQUE_HLSL_
 
+#include "shaderModel.hlsl"
 
 static float M_HALFPI_F   = 1.57079632679489661923f;
 static float M_PI_F       = 3.14159265358979323846f;
@@ -137,14 +138,14 @@ float3x3 quatToMat( float4 quat )
 /// @param negViewTS The negative view vector in tangent space.
 /// @param depthScale The parallax factor used to scale the depth result.
 ///
-float2 parallaxOffset( sampler2D texMap, float2 texCoord, float3 negViewTS, float depthScale )
+float2 parallaxOffset(TORQUE_SAMPLER2D(texMap), float2 texCoord, float3 negViewTS, float depthScale)
 {
-   float depth = tex2D( texMap, texCoord ).a;
+   float depth = TORQUE_TEX2D(texMap, texCoord).a;
    float2 offset = negViewTS.xy * ( depth * depthScale );
 
    for ( int i=0; i < PARALLAX_REFINE_STEPS; i++ )
    {
-      depth = ( depth + tex2D( texMap, texCoord + offset ).a ) * 0.5;
+      depth = (depth + TORQUE_TEX2D(texMap, texCoord + offset).a) * 0.5;
       offset = negViewTS.xy * ( depth * depthScale );
    }
 
@@ -152,14 +153,14 @@ float2 parallaxOffset( sampler2D texMap, float2 texCoord, float3 negViewTS, floa
 }
 
 /// Same as parallaxOffset but for dxtnm where depth is stored in the red channel instead of the alpha
-float2 parallaxOffsetDxtnm(sampler2D texMap, float2 texCoord, float3 negViewTS, float depthScale)
+float2 parallaxOffsetDxtnm(TORQUE_SAMPLER2D(texMap), float2 texCoord, float3 negViewTS, float depthScale)
 {
-   float depth = tex2D(texMap, texCoord).r;
+   float depth = TORQUE_TEX2D(texMap, texCoord).r;
    float2 offset = negViewTS.xy * (depth * depthScale);
 
    for (int i = 0; i < PARALLAX_REFINE_STEPS; i++)
    {
-      depth = (depth + tex2D(texMap, texCoord + offset).r) * 0.5;
+      depth = (depth + TORQUE_TEX2D(texMap, texCoord + offset).r) * 0.5;
       offset = negViewTS.xy * (depth * depthScale);
    }
 
@@ -306,6 +307,15 @@ float3 toGamma(float3 tex)
 {
    return tex;
 }
+float3 toLinear(float3 tex)
+{
+   return tex;
+}
+// Encodes gamma.
+float3 toLinear(float3 tex)
+{
+   return tex;
+}
 #else
 // Sample in linear space. Decodes gamma.
 float4 toLinear(float4 tex)
@@ -317,14 +327,15 @@ float4 toGamma(float4 tex)
 {
    return float4(pow(abs(tex.rgb), 1.0/2.2), tex.a);
 }
+// Sample in linear space. Decodes gamma.
 float3 toLinear(float3 tex)
 {
-   return pow(abs(tex), 2.2);
+   return pow(abs(tex.rgb), 2.2);
 }
 // Encodes gamma.
 float3 toGamma(float3 tex)
 {
-   return pow(abs(tex), 1.0/2.2);
+   return pow(abs(tex.rgb), 1.0/2.2);
 }
 #endif //
 

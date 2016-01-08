@@ -1893,7 +1893,6 @@ void GuiCanvas::renderFrame(bool preRenderOnly, bool bufferSwap /* = true */)
    if (GuiOffscreenCanvas::sList.size() != 0)
    {
       // Reset the entire state since oculus shit will have barfed it.
-      GFX->disableShaders(true);
       GFX->updateStates(true);
 
       for (Vector<GuiOffscreenCanvas*>::iterator itr = GuiOffscreenCanvas::sList.begin(); itr != GuiOffscreenCanvas::sList.end(); itr++)

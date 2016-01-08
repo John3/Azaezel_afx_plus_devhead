@@ -65,7 +65,11 @@ void AccuTexFeatHLSL::processPix(   Vector<ShaderComponent*> &componentList,
 
    // accu map
    Var *accuMap = new Var;
-   accuMap->setType( "sampler2D" );
+   if (mIsDirect3D11)
+      accuMap->setType("SamplerState");
+   else
+      accuMap->setType( "sampler2D" );
+
    accuMap->setName( "accuMap" );
    accuMap->uniform = true;
    accuMap->sampler = true;
@@ -140,7 +144,18 @@ void AccuTexFeatHLSL::processPix(   Vector<ShaderComponent*> &componentList,
    }
 
    // get the accu pixel color
-   meta->addStatement( new GenOp( "   @ = tex2D(@, @ * @);\r\n", colorAccuDecl, accuMap, inTex, accuScale ) );
+   if (mIsDirect3D11)
+   {
+      Var *accuMapTex = new Var;
+      accuMapTex->setType("Texture2D");
+      accuMapTex->setName("accuMapTex");
+      accuMapTex->uniform = true;
+      accuMapTex->texture = true;
+      accuMapTex->constNum = accuMap->constNum;
+      meta->addStatement(new GenOp("   @ = @.Sample(@, @ * @);\r\n", colorAccuDecl, accuMapTex, accuMap, inTex, accuScale));
+   }
+   else
+      meta->addStatement( new GenOp( "   @ = tex2D(@, @ * @);\r\n", colorAccuDecl, accuMap, inTex, accuScale ) );
    if (!fd.features[MFT_Imposter])
       meta->addStatement(new GenOp("   @ = toLinear(@);\r\n", accuColor, accuColor));
 

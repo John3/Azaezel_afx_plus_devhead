@@ -20,23 +20,30 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
+#include "../../shaderModel.hlsl"
+
+struct Connect
+{
+   float4 pos : TORQUE_POSITION;
+};
+
 struct Fragout
 {
-   float4 col : COLOR0;
-   float4 col1 : COLOR1;
-   float4 col2 : COLOR2;
-   float4 col3 : COLOR3;
+   float4 col0 : TORQUE_TARGET0;
+   float4 col1 : TORQUE_TARGET1;
+   float4 col2 : TORQUE_TARGET2;
+   float4 col3 : TORQUE_TARGET3;
 };
 
 //-----------------------------------------------------------------------------
 // Main                                                                        
 //-----------------------------------------------------------------------------
-Fragout main( )
+Fragout main( Connect IN )
 {
    Fragout OUT;
    
    // Clear Prepass Buffer ( Normals/Depth );
-   OUT.col =  float4(1.0, 1.0, 1.0, 1.0);
+   OUT.col0 =  float4(1.0, 1.0, 1.0, 1.0);
 
    // Clear Color Buffer.
    OUT.col1 = float4(0.0, 0.0, 0.0, 0.0001);

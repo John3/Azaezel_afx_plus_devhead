@@ -307,6 +307,7 @@ vec3 toLinear(vec3 tex)
 {
    return tex;
 }
+// Encodes gamma.
 vec3 toGamma(vec3 tex)
 {
    return tex;
