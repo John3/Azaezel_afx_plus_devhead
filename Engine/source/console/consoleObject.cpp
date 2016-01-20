@@ -1022,4 +1022,3 @@ DefineEngineFunction(linkNamespaces, bool, ( String childNSName, String parentNS
    
    return true;
 }
-

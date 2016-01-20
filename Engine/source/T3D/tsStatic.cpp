@@ -400,6 +400,11 @@ bool TSStatic::_createShape()
       mShapeInstance->cloneMaterialList();
    // AFX CODE BLOCK (selection-highlight) >>
 
+   // AFX CODE BLOCK (selection-highlight) <<
+   if (isClientObject())
+      mShapeInstance->cloneMaterialList();
+   // AFX CODE BLOCK (selection-highlight) >>
+
    if( isGhost() )
    {
       // Reapply the current skin

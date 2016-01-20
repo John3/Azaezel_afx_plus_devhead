@@ -1163,6 +1163,14 @@ bool ParticleEmitter::onNewDataBlock( GameBaseData *dptr, bool reload )
       part_list_head.next = NULL;
       n_parts = 0;
    }
+   
+   // AFX CODE BLOCK (datablock-temp-clone) <<
+   if (mDataBlock->isTempClone())
+   {
+     db_temp_clone = true;
+     return true;
+   }
+   // AFX CODE BLOCK (datablock-temp-clone) >>
 
    // AFX CODE BLOCK (datablock-temp-clone) <<
    if (mDataBlock->isTempClone())
