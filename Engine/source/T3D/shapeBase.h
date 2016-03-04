@@ -924,6 +924,7 @@ protected:
    public:
    F32 mTeamId;
    protected:
+   S32 mAiPose;                     ///< Current pose.
    F32 mEnergy;                     ///< Current enery level.
    F32 mRechargeRate;               ///< Energy recharge rate (in units/tick).
 

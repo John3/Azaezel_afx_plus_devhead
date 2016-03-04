@@ -3298,18 +3298,21 @@ void Player::updateMove(const Move* move)
    // Update the PlayerPose
    Pose desiredPose = mPose;
 
-   if ( mSwimming )
-      desiredPose = SwimPose; 
-   else if ( runSurface && move->trigger[sCrouchTrigger] && canCrouch() )     
-      desiredPose = CrouchPose;
-   else if ( runSurface && move->trigger[sProneTrigger] && canProne() )
-      desiredPose = PronePose;
-   else if ( move->trigger[sSprintTrigger] && canSprint() )
-      desiredPose = SprintPose;
-   else if ( canStand() )
-      desiredPose = StandPose;
+   if ( !mIsAiControlled )
+   {
+      if ( mSwimming )
+         desiredPose = SwimPose; 
+      else if ( runSurface && move->trigger[sCrouchTrigger] && canCrouch() )     
+         desiredPose = CrouchPose;
+      else if ( runSurface && move->trigger[sProneTrigger] && canProne() )
+         desiredPose = PronePose;
+      else if ( move->trigger[sSprintTrigger] && canSprint() )
+         desiredPose = SprintPose;
+      else if ( canStand() )
+         desiredPose = StandPose;
 
-   setPose( desiredPose );
+      setPose( desiredPose );
+   }
 }
 
 
@@ -6459,6 +6462,10 @@ U32 Player::packUpdate(NetConnection *con, U32 mask, BitStream *stream)
    {
       stream->writeFlag(mFalling);
 
+      stream->writeFlag(mSwimming);
+      stream->writeFlag(mJetting);  
+      stream->writeInt(mPose, NumPoseBits);
+	  
       stream->writeInt(mState,NumStateBits);
       if (stream->writeFlag(mState == RecoverState))
          stream->writeInt(mRecoverTicks,PlayerData::RecoverDelayBits);
@@ -6559,7 +6566,11 @@ void Player::unpackUpdate(NetConnection *con, BitStream *stream)
    if (stream->readFlag()) {
       mPredictionCount = sMaxPredictionTicks;
       mFalling = stream->readFlag();
-
+ 
+      mSwimming = stream->readFlag();
+      mJetting = stream->readFlag();  
+      mPose = (Pose)(stream->readInt(NumPoseBits)); 
+	  
       ActionState actionState = (ActionState)stream->readInt(NumStateBits);
       if (stream->readFlag()) {
          mRecoverTicks = stream->readInt(PlayerData::RecoverDelayBits);
@@ -7171,7 +7182,7 @@ void Player::playFootstepSound( bool triggeredLeft, Material* contactMaterial, S
       // Play default sound.
 
       S32 sound = -1;
-      if( contactMaterial && contactMaterial->mFootstepSoundId != -1 )
+      if (contactMaterial && (contactMaterial->mImpactSoundId>-1 && contactMaterial->mImpactSoundId<PlayerData::MaxSoundOffsets))
          sound = contactMaterial->mFootstepSoundId;
       else if( contactObject && contactObject->getTypeMask() & VehicleObjectType )
          sound = 2;
@@ -7202,7 +7213,7 @@ void Player:: playImpactSound()
          else
          {
             S32 sound = -1;
-            if( material && (material->mImpactSoundId>=0) )
+            if (material && (material->mImpactSoundId>-1 && material->mImpactSoundId<PlayerData::MaxSoundOffsets))
                sound = material->mImpactSoundId;
             else if( rInfo.object->getTypeMask() & VehicleObjectType )
                sound = 2; // Play metal;
