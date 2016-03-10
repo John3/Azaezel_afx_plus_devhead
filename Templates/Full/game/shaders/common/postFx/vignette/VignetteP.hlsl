@@ -20,16 +20,28 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
+#include "../../ShaderModelAutoGen.hlsl"
 #include "../postFx.hlsl"
 
-TORQUE_UNIFORM_SAMPLER2D(backBuffer, 0);
-uniform float Vmax;
-uniform float Vmin;
+TORQUE_UNIFORM_SAMPLER2D(backBuffer,0);
+uniform float radiusX;
+uniform float radiusY;
 
 float4 main(PFXVertToPix IN) : TORQUE_TARGET0
 {
-   float4 base = TORQUE_TEX2D(backBuffer, IN.uv0);  
+   float4 base = TORQUE_TEX2D(backBuffer, IN.uv0);   
+	  
+	float4 sepia = base;
+   if (fmod(distance(IN.uv0.y,0.5)*1024,4) < 1)
+      sepia.rgb = float3(0,0,0);
+	
    float dist = distance(IN.uv0, float2(0.5,0.5));
-   base.rgb *= smoothstep(Vmax, Vmin, dist);
+   float4 shift = float4(1.0,1.0,1.0,1.0);
+   shift.rgb *= smoothstep(radiusX, radiusY, dist);
+   float4 result = base;
+   result.r = result.b;
+   result.g = result.b;
+   result = lerp( sepia, result, saturate((abs(shift.r)-0.1)));
+   base = lerp(result,base,shift);
    return base;
 }

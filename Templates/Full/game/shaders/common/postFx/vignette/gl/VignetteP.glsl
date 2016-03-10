@@ -24,18 +24,29 @@
 #include "shadergen:/autogenConditioners.h"
 
 uniform sampler2D backBuffer;
-uniform float Vmax;
-uniform float Vmin;
+uniform float radiusX;
+uniform float radiusY;
 
 in vec2 uv0;
-#define IN_uv0 uv0
 
 out vec4 OUT_col;
 
 void main()
 {
-   vec4 base = texture(backBuffer, IN_uv0);
-   float dist = distance(IN_uv0, vec2(0.5,0.5));
-   base.rgb *= smoothstep(Vmax, Vmin, dist);
+   vec4 base = texture(backBuffer, uv0);
+   
+	vec4 sepia = base;
+   if (mod(distance(uv0.y,0.5)*1024,4) < 1)
+      sepia.rgb = vec3(0,0,0);
+	
+   float dist = distance(uv0, vec2(0.5,0.5));
+   vec4 shift = vec4(1.0,1.0,1.0,1.0);
+   shift.rgb *= smoothstep(radiusX, radiusY, dist);
+   vec4 result = base;
+   result.r = result.b;
+   result.g = result.b;
+   result = mix( sepia, result, clamp((abs(shift.r)-0.1)*4,0.0,1.0));
+   base = mix(result,base,shift);
+   
    OUT_col = base;
 }
