@@ -22,8 +22,8 @@
 
 // Volumetric Fog prepass vertex shader V1.00
 
-#include "shaders/common/shaderModel.hlsl"
-#include "shaders/common/hlslStructs.hlsl"
+#include "../shaderModel.hlsl"
+#include "../hlslStructs.hlsl"
 
 struct ConnectData
 {
@@ -36,13 +36,9 @@ uniform float4x4 modelView;
 ConnectData main( VertexIn_P IN)    
 {
 	ConnectData OUT;
-	
-	float4 inPos;
-	inPos.xyz = IN.pos;
-	inPos.w = 1.0;
  
-	OUT.hpos = mul( modelView, inPos );
-    OUT.pos = OUT.hpos;
+   OUT.hpos = mul(modelView, float4(IN.pos, 1.0));
+   OUT.pos = OUT.hpos;
 
-    return OUT;  
+   return OUT;  
 }

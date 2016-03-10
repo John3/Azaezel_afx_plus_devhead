@@ -23,11 +23,10 @@
 #include "../../postfx/postFx.hlsl"
 #include "../../shaderModelAutoGen.hlsl"
 
-TORQUE_UNIFORM_SAMPLER2D(lightPrePassTex, 0);
-
+TORQUE_UNIFORM_SAMPLER2D(lightPrePassTex,0);
 
 float4 main( PFXVertToPix IN ) : TORQUE_TARGET0
-{
+{   
    float4 lightColor = TORQUE_TEX2D( lightPrePassTex, IN.uv0 );    
    return float4( lightColor.rgb, 1.0 );   
 }

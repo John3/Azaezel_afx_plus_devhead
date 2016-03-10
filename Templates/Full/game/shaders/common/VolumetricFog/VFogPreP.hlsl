@@ -21,6 +21,7 @@
 //-----------------------------------------------------------------------------
 
 // Volumetric Fog prepass pixel shader V1.00
+#include "../shaderModel.hlsl"
 
 #include "shaders/common/shaderModel.hlsl"
 

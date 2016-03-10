@@ -35,9 +35,9 @@ float4 main( PFXVertToPix IN ) : TORQUE_TARGET0
     float4 color = TORQUE_TEX2D(backBuffer, IN.uv0.xy);
 
    // Apply the color correction.
-   color.r = TORQUE_TEX1D(colorCorrectionTex, color.r).r;
-   color.g = TORQUE_TEX1D(colorCorrectionTex, color.g).g;
-   color.b = TORQUE_TEX1D(colorCorrectionTex, color.b).b;
+   color.r = TORQUE_TEX1D( colorCorrectionTex, color.r ).r;
+   color.g = TORQUE_TEX1D( colorCorrectionTex, color.g ).g;
+   color.b = TORQUE_TEX1D( colorCorrectionTex, color.b ).b;
 
    // Apply gamma correction
     color.rgb = pow( abs(color.rgb), OneOverGamma );

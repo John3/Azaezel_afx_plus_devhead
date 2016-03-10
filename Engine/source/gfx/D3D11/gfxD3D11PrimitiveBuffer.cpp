@@ -22,7 +22,7 @@
 
 #include "gfx/D3D11/gfxD3D11Device.h"
 #include "gfx/D3D11/gfxD3D11EnumTranslate.h"
-#include "gfx/D3D11/gfxD3D11IndexBuffer.h"
+#include "gfx/D3D11/gfxD3D11PrimitiveBuffer.h"
 #include "core/util/safeRelease.h"
 
 void GFXD3D11PrimitiveBuffer::prepare()
@@ -39,6 +39,7 @@ void GFXD3D11PrimitiveBuffer::lock(U32 indexStart, U32 indexEnd, void **indexPtr
 
 	switch(mBufferType)
 	{
+   case GFXBufferTypeImmutable:
 	case GFXBufferTypeStatic:
 	case GFXBufferTypeDynamic:
 		flags = D3D11_MAP_WRITE_DISCARD;
@@ -76,19 +77,18 @@ void GFXD3D11PrimitiveBuffer::lock(U32 indexStart, U32 indexEnd, void **indexPtr
 
 	
 	mIndexStart = indexStart;
-    mIndexEnd = indexEnd;
+   mIndexEnd = indexEnd;
 	
-	if(mBufferType == GFXBufferTypeStatic)
-    {
-		U32 sizeToLock = (indexEnd - indexStart) * sizeof(U16);
+   if (mBufferType == GFXBufferTypeStatic || mBufferType == GFXBufferTypeImmutable)
+   {
+      U32 sizeToLock = (indexEnd - indexStart) * sizeof(U16);
 		*indexPtr = new U8[sizeToLock];
 		mLockedBuffer = *indexPtr;
-	  //m
-    }
+   }
 	else
 	{
 		D3D11_MAPPED_SUBRESOURCE pIndexData;
-	    ZeroMemory(&pIndexData, sizeof(D3D11_MAPPED_SUBRESOURCE));
+      ZeroMemory(&pIndexData, sizeof(D3D11_MAPPED_SUBRESOURCE));
 
 		HRESULT hr = D3D11DEVICECONTEXT->Map(ib, 0, flags, 0, &pIndexData);
 
@@ -96,9 +96,9 @@ void GFXD3D11PrimitiveBuffer::lock(U32 indexStart, U32 indexEnd, void **indexPtr
 		{
 			AssertFatal(false, "GFXD3D11PrimitiveBuffer::lock - Could not lock primitive buffer.");
 		}
-		*indexPtr = (U8*)pIndexData.pData + (indexStart * sizeof(U16)) ;
-		
-	}
+
+		*indexPtr = (U8*)pIndexData.pData + (indexStart * sizeof(U16)) ;		
+   }
 
 	#ifdef TORQUE_DEBUG
    
@@ -145,32 +145,29 @@ void GFXD3D11PrimitiveBuffer::unlock()
 
    #endif // TORQUE_DEBUG
     
-	  const U32 totalSize = this->mIndexCount * sizeof(U16);
-	 /// this->
+      const U32 totalSize = this->mIndexCount * sizeof(U16);
+      /// this->
     
 	  
-	  if(mBufferType == GFXBufferTypeStatic)
-	  {
-		//set up the update region of the buffer
-		D3D11_BOX box;
-		box.back  = 1;
-		box.front = 0;
-		box.top = 0;
-		box.bottom =1;
-		box.left = mIndexStart *sizeof(U16);
-		box.right = mIndexEnd * sizeof(U16);
-		//update the real ib buffer
-		D3D11DEVICECONTEXT->UpdateSubresource(ib, 0, &box,mLockedBuffer,totalSize, 0);
-		//clean up the old buffer
-		delete[] mLockedBuffer;
-		mLockedBuffer = NULL;
+      if (mBufferType == GFXBufferTypeStatic || mBufferType == GFXBufferTypeImmutable)
+      {
+         //set up the update region of the buffer
+		   D3D11_BOX box;
+		   box.back  = 1;
+		   box.front = 0;
+		   box.top = 0;
+		   box.bottom =1;
+		   box.left = mIndexStart *sizeof(U16);
+		   box.right = mIndexEnd * sizeof(U16);
+		   //update the real ib buffer
+		   D3D11DEVICECONTEXT->UpdateSubresource(ib, 0, &box,mLockedBuffer,totalSize, 0);
+		   //clean up the old buffer
+		   delete[] mLockedBuffer;
+		   mLockedBuffer = NULL;
 	  }
 	  else
-	  {
-		 
-		 D3D11DEVICECONTEXT->Unmap(ib,0);
-      
-   
+	  {		 
+         D3D11DEVICECONTEXT->Unmap(ib,0);   
 	  }
   
    mLocked = false;
@@ -188,7 +185,7 @@ GFXD3D11PrimitiveBuffer::~GFXD3D11PrimitiveBuffer()
 
 void GFXD3D11PrimitiveBuffer::zombify()
 {
-   if(mBufferType == GFXBufferTypeStatic)
+   if (mBufferType == GFXBufferTypeStatic || mBufferType == GFXBufferTypeImmutable)
       return;
             
    AssertFatal(!mLocked, "GFXD3D11PrimitiveBuffer::zombify - Cannot zombify a locked buffer!");

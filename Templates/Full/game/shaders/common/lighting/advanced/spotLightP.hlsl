@@ -30,7 +30,7 @@
 
 struct ConvexConnectP
 {
-   float4 hpos : TORQUE_POSITION;
+   float4 pos : TORQUE_POSITION;
    float4 wsEyeDir : TEXCOORD0;
    float4 ssPos : TEXCOORD1;
    float4 vsEyeDir : TEXCOORD2;
@@ -43,32 +43,33 @@ TORQUE_UNIFORM_SAMPLER2D(dynamicShadowMap,2);
 #ifdef USE_COOKIE_TEX
 
 /// The texture for cookie rendering.
-TORQUE_UNIFORM_SAMPLER2D(cookieMap, 4);
+TORQUE_UNIFORM_SAMPLER2D(cookieMap, 3);
 
 #endif
 
-TORQUE_UNIFORM_SAMPLER2D(lightBuffer,5);
-TORQUE_UNIFORM_SAMPLER2D(colorBuffer,6);
-TORQUE_UNIFORM_SAMPLER2D(matInfoBuffer,7);
+TORQUE_UNIFORM_SAMPLER2D(lightBuffer, 5);
+TORQUE_UNIFORM_SAMPLER2D(colorBuffer, 6);
+TORQUE_UNIFORM_SAMPLER2D(matInfoBuffer, 7);
 
+uniform float4 rtParams0;
 
 uniform float  lightBrightness;
 uniform float3 lightPosition;
 
-uniform float  lightRange;
-uniform float  shadowSoftness;
-uniform float2 lightAttenuation;
-
 uniform float4 lightColor;
-uniform float4 rtParams0;
+
+uniform float  lightRange;
+uniform float3 lightDirection;
+
 uniform float4 lightSpotParams;
 uniform float4 lightMapParams;
 uniform float4 vsFarPlane;
 uniform float4x4 viewToLightProj;
-uniform float4x4 dynamicViewToLightProj;
 uniform float4 lightParams;
+uniform float4x4 dynamicViewToLightProj;
 
-uniform float3 lightDirection;
+uniform float2 lightAttenuation;
+uniform float shadowSoftness;
 
 float4 main(   ConvexConnectP IN ) : TORQUE_TARGET0
 {   
@@ -129,7 +130,7 @@ float4 main(   ConvexConnectP IN ) : TORQUE_TARGET0
       // Get a linear depth from the light source.
       float distToLight = pxlPosLightProj.z / lightRange;
 
-      float static_shadowed = softShadow_filter(TORQUE_SAMPLER2D_MAKEARG(shadowMap),
+      float static_shadowed = softShadow_filter( TORQUE_SAMPLER2D_MAKEARG(shadowMap),
                                           ssPos.xy,
                                           shadowCoord,
                                           shadowSoftness,

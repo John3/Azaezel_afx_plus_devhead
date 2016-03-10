@@ -22,14 +22,14 @@
 
 #include "../../shaderModel.hlsl"
 
-struct Connect
+struct Conn
 {
-   float4 pos : TORQUE_POSITION;
+   float4 hpos : TORQUE_POSITION;
 };
 
 struct Fragout
 {
-   float4 col0 : TORQUE_TARGET0;
+   float4 col : TORQUE_TARGET0;
    float4 col1 : TORQUE_TARGET1;
    float4 col2 : TORQUE_TARGET2;
    float4 col3 : TORQUE_TARGET3;
@@ -38,12 +38,12 @@ struct Fragout
 //-----------------------------------------------------------------------------
 // Main                                                                        
 //-----------------------------------------------------------------------------
-Fragout main( Connect IN )
+Fragout main( Conn IN )
 {
    Fragout OUT;
    
    // Clear Prepass Buffer ( Normals/Depth );
-   OUT.col0 =  float4(1.0, 1.0, 1.0, 1.0);
+   OUT.col =  float4(1.0, 1.0, 1.0, 1.0);
 
    // Clear Color Buffer.
    OUT.col1 = float4(0.0, 0.0, 0.0, 0.0001);

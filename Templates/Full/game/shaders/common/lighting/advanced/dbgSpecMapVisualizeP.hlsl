@@ -20,11 +20,9 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "shadergen:/autogenConditioners.h"
 #include "../../postfx/postFx.hlsl"
 
-TORQUE_UNIFORM_SAMPLER2D(matinfoTex, 0);
-
+TORQUE_UNIFORM_SAMPLER2D(matinfoTex,0);
 
 float4 main( PFXVertToPix IN ) : TORQUE_TARGET0
 {     

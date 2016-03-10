@@ -22,8 +22,8 @@
 
 // Volumetric Fog final vertex shader V1.00
 
-#include "shaders/common/shaderModel.hlsl"
-#include "shaders/common/hlslStructs.hlsl"
+#include "../shaderModel.hlsl"
+#include "../hlslStructs.hlsl"
 
 struct ConnectData
 {
@@ -34,13 +34,13 @@ struct ConnectData
 
 uniform float4x4 modelView;
 
-ConnectData main( VertexIn_PNT IN)    
+ConnectData main( VertexIn_PNTT IN)    
 {  
-    ConnectData OUT;
+   ConnectData OUT;
 	
 	OUT.hpos = mul(modelView, float4(IN.pos,1.0));
 	OUT.htpos = OUT.hpos;
 	OUT.uv0 = IN.uv0;
 	
-    return OUT;  
+   return OUT;  
 }

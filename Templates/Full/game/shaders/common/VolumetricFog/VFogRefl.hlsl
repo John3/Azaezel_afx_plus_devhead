@@ -22,6 +22,7 @@
 
 #include "shaders/common/shaderModel.hlsl"
 // Volumetric Fog Reflection pixel shader V1.00
+#include "../shaderModel.hlsl"
 uniform float4 fogColor;
 uniform float fogDensity;
 uniform float reflStrength;

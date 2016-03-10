@@ -25,21 +25,21 @@
 #include "../shaderModelAutoGen.hlsl"
 #include "../torque.hlsl"
 
-TORQUE_UNIFORM_SAMPLER2D(prepassTex,0);
-TORQUE_UNIFORM_SAMPLER2D(depthBuffer,1);
-TORQUE_UNIFORM_SAMPLER2D(frontBuffer,2);
-TORQUE_UNIFORM_SAMPLER2D(density,3);
+TORQUE_UNIFORM_SAMPLER2D(prepassTex, 0);
+TORQUE_UNIFORM_SAMPLER2D(depthBuffer, 1);
+TORQUE_UNIFORM_SAMPLER2D(frontBuffer, 2);
+TORQUE_UNIFORM_SAMPLER2D(density, 3);
   
+uniform float3 ambientColor;
 uniform float accumTime;
 uniform float4 fogColor;
+uniform float4 modspeed;//xy speed layer 1, zw speed layer 2
+uniform float2 viewpoint;
+uniform float2 texscale;
 uniform float fogDensity;
 uniform float preBias;
 uniform float textured;
 uniform float modstrength;
-uniform float4 modspeed;//xy speed layer 1, zw speed layer 2
-uniform float2 viewpoint;
-uniform float2 texscale;
-uniform float3 ambientColor;
 uniform float numtiles;
 uniform float fadesize;
 uniform float2 PixelSize;
@@ -56,9 +56,9 @@ float4 main( ConnectData IN ) : TORQUE_TARGET0
 	float2 uvscreen=((IN.htpos.xy/IN.htpos.w) + 1.0 ) / 2.0;
 	uvscreen.y = 1.0 - uvscreen.y;
 	
-	float obj_test = TORQUE_PREPASS_UNCONDITION( prepassTex, uvscreen).w * preBias;
-	float depth = TORQUE_TEX2D(depthBuffer,uvscreen).r;
-	float front = TORQUE_TEX2D(frontBuffer,uvscreen).r;
+   float obj_test = TORQUE_PREPASS_UNCONDITION(prepassTex, uvscreen).w * preBias;
+   float depth = TORQUE_TEX2D(depthBuffer, uvscreen).r;
+   float front = TORQUE_TEX2D(frontBuffer, uvscreen).r;
 
 	if (depth <= front)
 		return float4(0,0,0,0);

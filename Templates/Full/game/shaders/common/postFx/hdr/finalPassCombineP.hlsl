@@ -20,9 +20,9 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "../../shaderModelAutoGen.hlsl"
 #include "../../torque.hlsl"
 #include "../postFx.hlsl"
+#include "../../shaderModelAutoGen.hlsl"
 
 TORQUE_UNIFORM_SAMPLER2D(sceneTex, 0);
 TORQUE_UNIFORM_SAMPLER2D(luminanceTex, 1);
@@ -43,7 +43,6 @@ uniform float g_fBloomScale;
 uniform float g_fOneOverGamma;
 uniform float Brightness;
 uniform float Contrast;
-
 
 float4 main( PFXVertToPix IN ) : TORQUE_TARGET0
 {
