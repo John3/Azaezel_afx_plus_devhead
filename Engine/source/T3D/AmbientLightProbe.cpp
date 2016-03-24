@@ -81,7 +81,7 @@ AmbientLightProbe::AmbientLightProbe()
    mObjToWorld.identity();
    mWorldToObj.identity();
 
-   mLightInfoTarget = NULL;
+   mIndirectLightingTarget = NULL;
    mPrepassTarget = NULL;
    mMatInfoTarget = NULL;
    mProbeShader = NULL;
@@ -103,7 +103,8 @@ AmbientLightProbe::AmbientLightProbe()
 
 AmbientLightProbe::~AmbientLightProbe()
 {
-   mLightInfoTarget = NULL;
+   RenderPassManager::getRenderBinSignal().remove(this, &AmbientLightProbe::_handleBinEvent);
+   mIndirectLightingTarget = NULL;
    mPrepassTarget = NULL;
    mMatInfoTarget = NULL;
    mProbeShader = NULL;
@@ -353,10 +354,10 @@ void AmbientLightProbe::_handleBinEvent(RenderBinManager *bin,
 
       if (!mRenderTarget) return;
 
-      if (!mLightInfoTarget)
-         mLightInfoTarget = NamedTexTarget::find("lightinfo");
+      if (!mIndirectLightingTarget)
+         mIndirectLightingTarget = NamedTexTarget::find("indirectLighting");
 
-      GFXTextureObject *texObject = mLightInfoTarget->getTexture();
+      GFXTextureObject *texObject = mIndirectLightingTarget->getTexture();
       if (!texObject) return;
 
       mRenderTarget->attachTexture(GFXTextureTarget::Color0, texObject);
@@ -431,7 +432,7 @@ void AmbientLightProbe::_handleBinEvent(RenderBinManager *bin,
 
       // Render Target Parameters.
       const Point3I &targetSz = texObject->getSize();
-      const RectI &targetVp = mLightInfoTarget->getViewport();
+      const RectI &targetVp = mIndirectLightingTarget->getViewport();
       Point4F rtParams;
       ScreenSpace::RenderTargetParameters(targetSz, targetVp, rtParams);
       mProbeShaderConsts->setSafe(mRTParamsPropSC, rtParams);
@@ -448,7 +449,7 @@ void AmbientLightProbe::_handleBinEvent(RenderBinManager *bin,
       GFX->setTexture(0, prepassTexObject);
 
       // Draw the screenspace quad.
-      GFX->drawPrimitive(GFXTriangleFan, 0, 2);
+      GFX->drawPrimitive(GFXTriangleStrip, 0, 2);
 
       // Clean Up
       mRenderTarget->resolve();

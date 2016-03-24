@@ -40,9 +40,9 @@ public:
    bool mUseCubemap;
 
 protected:
-   // We sample from prepass and render to light buffer.
+   // We sample from prepass and render to light map buffer.
    NamedTexTarget*         mPrepassTarget;
-   NamedTexTarget*         mLightInfoTarget;
+   NamedTexTarget*         mIndirectLightingTarget;
    NamedTexTarget*         mMatInfoTarget;
    GFXTextureTargetRef     mRenderTarget;
 
