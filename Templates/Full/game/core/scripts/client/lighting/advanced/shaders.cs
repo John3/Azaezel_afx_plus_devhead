@@ -36,11 +36,8 @@ new GFXStateBlockData( AL_VectorLightState )
 
    samplersDefined = true;
    samplerStates[0] = SamplerClampPoint;  // G-buffer
-   mSamplerNames[0] = "prePassBuffer";
    samplerStates[1] = SamplerClampPoint;  // Shadow Map (Do not change this to linear, as all cards can not filter equally.)
-   mSamplerNames[1] = "shadowMap";
    samplerStates[2] = SamplerClampLinear;  // SSAO Mask
-   mSamplerNames[2] = "ssaoMask";
    samplerStates[3] = SamplerWrapPoint;   // Random Direction Map
    
    cullDefined = true;
@@ -111,9 +108,7 @@ new GFXStateBlockData( AL_ConvexLightState )
 
    samplersDefined = true;
    samplerStates[0] = SamplerClampPoint;  // G-buffer
-   mSamplerNames[0] = "prePassBuffer";
    samplerStates[1] = SamplerClampPoint;  // Shadow Map (Do not use linear, these are perspective projections)
-   mSamplerNames[1] = "shadowMap";
    samplerStates[2] = SamplerClampLinear; // Cookie Map   
    samplerStates[3] = SamplerWrapPoint;   // Random Direction Map
    
@@ -266,6 +261,19 @@ new CustomMaterial( AL_ParticlePointLightMaterial )
    
    sampler["prePassBuffer"] = "#prepass";
    target = "directLighting";
+   
+   pixVersion = 3.0;
+};
+
+singleton ShaderData( AmbientLightProbeShaderData )
+{
+   DXVertexShaderFile     = "shaders/common/ambientLightProbeV.hlsl";
+   DXPixelShaderFile      = "shaders/common/ambientLightProbeP.hlsl";  
+   
+   samplerNames[0] = "$prePassBuffer"; 
+   samplerNames[1] = "$cubeMap";
+   
+   target = "indirectLighting";
    
    pixVersion = 3.0;
 };
