@@ -369,6 +369,7 @@ void AmbientLightProbe::_handleBinEvent(RenderBinManager *bin,
       GFXTextureObject *prepassTexObject = mPrepassTarget->getTexture();
       if (!prepassTexObject) return;
 
+      GFXTransformSaver saver;
       // -- Setup screenspace quad to render (postfx) --
       Frustum frustum = sceneState->getCameraFrustum();
       GFXVertexBufferHandle<PFXVertex> vb;
@@ -501,11 +502,6 @@ void AmbientLightProbe::_updateScreenGeometry(const Frustum &frustum,
 
    PFXVertex *vert = outVB->lock();
 
-   vert->point.set(-1.0, -1.0, 0.0);
-   vert->texCoord.set(0.0f, 1.0f);
-   vert->wsEyeRay = frustumPoints[Frustum::FarBottomLeft] - cameraOffsetPos;
-   vert++;
-
    vert->point.set(-1.0, 1.0, 0.0);
    vert->texCoord.set(0.0f, 0.0f);
    vert->wsEyeRay = frustumPoints[Frustum::FarTopLeft] - cameraOffsetPos;
@@ -514,6 +510,11 @@ void AmbientLightProbe::_updateScreenGeometry(const Frustum &frustum,
    vert->point.set(1.0, 1.0, 0.0);
    vert->texCoord.set(1.0f, 0.0f);
    vert->wsEyeRay = frustumPoints[Frustum::FarTopRight] - cameraOffsetPos;
+   vert++;
+
+   vert->point.set(-1.0, -1.0, 0.0);
+   vert->texCoord.set(0.0f, 1.0f);
+   vert->wsEyeRay = frustumPoints[Frustum::FarBottomLeft] - cameraOffsetPos;
    vert++;
 
    vert->point.set(1.0, -1.0, 0.0);
