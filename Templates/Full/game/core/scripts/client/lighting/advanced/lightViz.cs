@@ -123,7 +123,6 @@ singleton PostEffect( AL_NormalsVisualize )
    shader = AL_NormalsVisualizeShader;
    stateBlock = AL_DefaultVisualizeState;
    texture[0] = "#prepass";
-   
    target = "$backBuffer";
    renderPriority = 9999;
 };
@@ -150,7 +149,7 @@ new ShaderData( AL_LightColorVisualizeShader )
    OGLVertexShaderFile = "shaders/common/postFx/gl/postFxV.glsl";
    OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/dbgLightColorVisualizeP.glsl";
    
-   samplerNames[0] = "lightPrePassTex";
+   samplerNames[0] = "directLightingBuffer";
    
    pixVersion = 2.0;
 };
@@ -159,7 +158,7 @@ singleton PostEffect( AL_LightColorVisualize )
 {   
    shader = AL_LightColorVisualizeShader;
    stateBlock = AL_DefaultVisualizeState;
-   texture[0] = "#lightinfo";
+   texture[0] = "#directLighting";
    target = "$backBuffer";
    renderPriority = 9999;
 };
@@ -185,7 +184,7 @@ new ShaderData( AL_LightSpecularVisualizeShader )
    OGLVertexShaderFile = "shaders/common/postFx/gl/postFxV.glsl";
    OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/dbgLightSpecularVisualizeP.glsl";
    
-   samplerNames[0] = "lightPrePassTex";
+   samplerNames[0] = "directLightingBuffer";
    
    pixVersion = 2.0;
 };
@@ -194,7 +193,7 @@ singleton PostEffect( AL_LightSpecularVisualize )
 {   
    shader = AL_LightSpecularVisualizeShader;
    stateBlock = AL_DefaultVisualizeState;
-   texture[0] = "#lightinfo";
+   texture[0] = "#directLighting";
    target = "$backBuffer";
    renderPriority = 9999;
 };

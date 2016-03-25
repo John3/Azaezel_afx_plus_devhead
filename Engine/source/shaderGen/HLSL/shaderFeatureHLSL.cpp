@@ -893,19 +893,6 @@ void DiffuseMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentList,
    diffuseMap->uniform = true;
    diffuseMap->sampler = true;
    diffuseMap->constNum = Var::getTexUnitNum();     // used as texture unit num here
-   
-   Var* diffuseMapTex = NULL;
-   if (mIsDirect3D11)
-   {
-      diffuseMap->setType("SamplerState");
-
-      diffuseMapTex = new Var;
-      diffuseMapTex->setName("diffuseMapTex");
-      diffuseMapTex->setType("Texture2D");
-      diffuseMapTex->uniform = true;
-      diffuseMapTex->texture = true;
-      diffuseMapTex->constNum = diffuseMap->constNum;
-   }
 
    Var* diffuseMapTex = NULL;
    if (mIsDirect3D11)
@@ -1327,6 +1314,7 @@ void LightmapFeatHLSL::processPix(  Vector<ShaderComponent*> &componentList,
       lightMapTex->constNum = lightMap->constNum;
    }
    
+   
    // argh, pixel specular should prob use this too
    if (fd.features[MFT_NormalMap])
    {
@@ -1734,7 +1722,8 @@ void DetailFeatHLSL::processPix( Vector<ShaderComponent*> &componentList,
    // diffuse texture.
 
    // TODO: We could add a feature to toggle between this
-   // and a simple multiplication with the detail map
+   // and a simple multiplication with the detail map.
+
    LangElement *statement = NULL;
    if (mIsDirect3D11)
       statement = new GenOp("( @.Sample(@, @) * 2.0 ) - 1.0", detailMapTex, detailMap, inTex);
@@ -2103,8 +2092,6 @@ void ReflectCubeFeatHLSL::processPix(Vector<ShaderComponent*> &componentList,
       else
          meta->addStatement(new GenOp("   @.rgb *= @.rgb;\r\n", targ, texCube));
    }
-   if (fd.features[MFT_StaticCubemap]) //dynamic reflections are linearized coming and going. so do statics twice
-      meta->addStatement(new GenOp("   @ = toLinear(@);\r\n", targ, targ));
    output = meta;
 }
 

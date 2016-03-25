@@ -47,9 +47,9 @@ new ShaderData( AL_DeferredShader )
    OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/deferredShadingP.glsl";
 
    samplerNames[0] = "colorBufferTex";
-   samplerNames[1] = "lightPrePassTex";
+   samplerNames[1] = "directLightingBuffer";
    samplerNames[2] = "matInfoTex";
-   samplerNames[3] = "lightMapTex";
+   samplerNames[3] = "indirectLightingBuffer";
    samplerNames[4] = "prepassTex";
    pixVersion = 2.0;
 };
@@ -61,9 +61,9 @@ singleton PostEffect( AL_DeferredShading )
    shader = AL_DeferredShader;
    stateBlock = AL_DeferredShadingState;
    texture[0] = "#color";
-   texture[1] = "#lightinfo";
+   texture[1] = "#directLighting";
    texture[2] = "#matinfo";
-   texture[3] = "#lightmapinfo";
+   texture[3] = "#indirectLighting";
    texture[4] = "#prepass";
    target = "$backBuffer";
    renderPriority = 10000;
@@ -182,7 +182,7 @@ function toggleMetalMapViz( %enable )
       AL_MetalMapVisualize.disable();    
 }
 
-//Light map display (lightmapinfo)
+//Light map display (indirectLighting)
 new ShaderData( AL_LightMapShader )
 {
    DXVertexShaderFile = "shaders/common/postFx/postFxV.hlsl";
@@ -191,7 +191,7 @@ new ShaderData( AL_LightMapShader )
    OGLVertexShaderFile = "shaders/common/postFx/gl/postFxV.glsl";
    OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/dbgLightMapVisualizeP.glsl";
 
-   samplerNames[0] = "lightMapTex";
+   samplerNames[0] = "indirectLightingBuffer";
    pixVersion = 2.0;
 };
 
@@ -199,7 +199,7 @@ singleton PostEffect( AL_LightMapVisualize )
 {   
    shader = AL_LightMapShader;
    stateBlock = AL_DefaultVisualizeState;
-   texture[0] = "#lightmapinfo";
+   texture[0] = "#indirectLighting";
    target = "$backBuffer";
    renderPriority = 9999;
 };
