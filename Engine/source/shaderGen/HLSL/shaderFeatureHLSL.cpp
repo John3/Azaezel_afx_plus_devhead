@@ -2085,10 +2085,14 @@ void ReflectCubeFeatHLSL::processPix(Vector<ShaderComponent*> &componentList,
       Var *metalness = (Var*)LangElement::find("metalness");
       if (metalness)
       {
-         meta->addStatement(new GenOp("   @ *= float4(@.rgb*@, @);\r\n", targ, texCube, metalness, metalness));
+         Var *dColor = new Var("dColor", "float3");
+         Var *envColor = new Var("envColor", "float3");
+         meta->addStatement(new GenOp("   @ = @.rgb - (@.rgb * @);\r\n", new DecOp(dColor), targ, targ, metalness));
+         meta->addStatement(new GenOp("   @ = @.rgb*(@).rgb;\r\n", new DecOp(envColor), targ, texCube));
+         meta->addStatement(new GenOp("   @.rgb = toLinear(@)+@*@;\r\n", targ, dColor, envColor, metalness));
       }
       else if (lerpVal)
-         meta->addStatement(new GenOp("   @ *= float4(@.rgb*@.a, @.a);\r\n", targ, texCube, lerpVal, lerpVal));
+         meta->addStatement(new GenOp("   @ *= float4(@.rgb*@.a, @.a);\r\n", targ, texCube, lerpVal, targ));
       else
          meta->addStatement(new GenOp("   @.rgb *= @.rgb;\r\n", targ, texCube));
    }
@@ -3006,7 +3010,7 @@ void DeferredSkyHLSL::processVert( Vector<ShaderComponent*> &componentList,
 {
    Var *outPosition = (Var*)LangElement::find( "hpos" );
    MultiLine *meta = new MultiLine;
-   meta->addStatement( new GenOp( "   @.w = @.z;\r\n", outPosition, outPosition ) );
+   //meta->addStatement( new GenOp( "   @.w = @.z;\r\n", outPosition, outPosition ) );
 
    output = meta;
 }

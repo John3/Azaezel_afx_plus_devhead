@@ -24,18 +24,17 @@ singleton ShaderData( DeferredColorShader )
 new GFXStateBlockData( AL_DeferredShadingState : PFX_DefaultStateBlock )
 {  
    cullMode = GFXCullNone;
-      
+   
    blendDefined = true;
    blendEnable = true; 
    blendSrc = GFXBlendSrcAlpha;
    blendDest = GFXBlendInvSrcAlpha;
-
+   
    samplersDefined = true;
    samplerStates[0] = SamplerWrapLinear;
    samplerStates[1] = SamplerWrapLinear;
    samplerStates[2] = SamplerWrapLinear;
    samplerStates[3] = SamplerWrapLinear;
-   samplerStates[4] = SamplerWrapLinear;
 };
 
 new ShaderData( AL_DeferredShader )
@@ -47,10 +46,10 @@ new ShaderData( AL_DeferredShader )
    OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/deferredShadingP.glsl";
 
    samplerNames[0] = "colorBufferTex";
-   samplerNames[1] = "directLightingBuffer";
+   samplerNames[1] = "lightPrePassTex";
    samplerNames[2] = "matInfoTex";
-   samplerNames[3] = "indirectLightingBuffer";
-   samplerNames[4] = "prepassTex";
+   samplerNames[3] = "prepassTex";
+   
    pixVersion = 2.0;
 };
 
@@ -61,10 +60,10 @@ singleton PostEffect( AL_DeferredShading )
    shader = AL_DeferredShader;
    stateBlock = AL_DeferredShadingState;
    texture[0] = "#color";
-   texture[1] = "#directLighting";
+   texture[1] = "#lightinfo";
    texture[2] = "#matinfo";
-   texture[3] = "#indirectLighting";
-   texture[4] = "#prepass";
+   texture[3] = "#prepass";
+   
    target = "$backBuffer";
    renderPriority = 10000;
    allowReflectPass = true;
@@ -112,107 +111,37 @@ function toggleColorBufferViz( %enable )
    }
 }
 
-//roughness map display (matinfo.b)
-new ShaderData( AL_RoughMapShader )
+new ShaderData( AL_SpecMapShader )
 {
    DXVertexShaderFile = "shaders/common/postFx/postFxV.hlsl";
-   DXPixelShaderFile  = "shaders/common/lighting/advanced/dbgRoughMapVisualizeP.hlsl";
+   DXPixelShaderFile  = "shaders/common/lighting/advanced/dbgSpecMapVisualizeP.hlsl";
 
    OGLVertexShaderFile = "shaders/common/postFx/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/dbgRoughMapVisualizeP.glsl";
+   OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/dbgSpecMapVisualizeP.glsl";
 
    samplerNames[0] = "matinfoTex";
    pixVersion = 2.0;
 };
 
-singleton PostEffect( AL_RoughMapVisualize )
+singleton PostEffect( AL_SpecMapVisualize )
 {   
-   shader = AL_RoughMapShader;
+   shader = AL_SpecMapShader;
    stateBlock = AL_DefaultVisualizeState;
    texture[0] = "#matinfo";
    target = "$backBuffer";
    renderPriority = 9999;
 };
 
-function toggleRoughMapViz( %enable )
+/// Toggles the visualization of the AL lighting specular power buffer.
+function toggleSpecMapViz( %enable )
 {   
    if ( %enable $= "" )
    {
-      $AL_RoughMapShaderVar = AL_RoughMapVisualize.isEnabled() ? false : true;
-      AL_RoughMapVisualize.toggle();
+      $AL_SpecMapShaderVar = AL_SpecMapVisualize.isEnabled() ? false : true;
+      AL_SpecMapVisualize.toggle();
    }
    else if ( %enable )
-      AL_RoughMapVisualize.enable();
+      AL_SpecMapVisualize.enable();
    else if ( !%enable )
-      AL_RoughMapVisualize.disable();    
-}
-
-//metalness map display (matinfo.a)
-new ShaderData( AL_MetalMapShader )
-{
-   DXVertexShaderFile = "shaders/common/postFx/postFxV.hlsl";
-   DXPixelShaderFile  = "shaders/common/lighting/advanced/dbgMetalMapVisualizeP.hlsl";
-
-   OGLVertexShaderFile = "shaders/common/postFx/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/dbgMetalMapVisualizeP.glsl";
-
-   samplerNames[0] = "matinfoTex";
-   pixVersion = 2.0;
-};
-
-singleton PostEffect( AL_MetalMapVisualize )
-{   
-   shader = AL_MetalMapShader;
-   stateBlock = AL_DefaultVisualizeState;
-   texture[0] = "#matinfo";
-   target = "$backBuffer";
-   renderPriority = 9999;
-};
-
-function toggleMetalMapViz( %enable )
-{   
-   if ( %enable $= "" )
-   {
-      $AL_MetalMapShaderVar = AL_MetalMapVisualize.isEnabled() ? false : true;
-      AL_MetalMapVisualize.toggle();
-   }
-   else if ( %enable )
-      AL_MetalMapVisualize.enable();
-   else if ( !%enable )
-      AL_MetalMapVisualize.disable();    
-}
-
-//Light map display (indirectLighting)
-new ShaderData( AL_LightMapShader )
-{
-   DXVertexShaderFile = "shaders/common/postFx/postFxV.hlsl";
-   DXPixelShaderFile  = "shaders/common/lighting/advanced/dbgLightMapVisualizeP.hlsl";
-
-   OGLVertexShaderFile = "shaders/common/postFx/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "shaders/common/lighting/advanced/gl/dbgLightMapVisualizeP.glsl";
-
-   samplerNames[0] = "indirectLightingBuffer";
-   pixVersion = 2.0;
-};
-
-singleton PostEffect( AL_LightMapVisualize )
-{   
-   shader = AL_LightMapShader;
-   stateBlock = AL_DefaultVisualizeState;
-   texture[0] = "#indirectLighting";
-   target = "$backBuffer";
-   renderPriority = 9999;
-};
-
-function toggleLightMapViz( %enable )
-{   
-   if ( %enable $= "" )
-   {
-      $AL_LightMapShaderVar = AL_LightMapVisualize.isEnabled() ? false : true;
-      AL_LightMapVisualize.toggle();
-   }
-   else if ( %enable )
-      AL_LightMapVisualize.enable();
-   else if ( !%enable )
-      AL_LightMapVisualize.disable();    
+      AL_SpecMapVisualize.disable();    
 }
