@@ -1257,7 +1257,10 @@ void DiffuseVertColorFeatureHLSL::processPix(   Vector<ShaderComponent*> &compon
    }
    
    MultiLine* meta = new MultiLine;
-   meta->addStatement( new GenOp( "   @;\r\n", assignColor( vertColor, Material::Mul ) ) );
+   if (fd.features[MFT_isDeferred])
+      meta->addStatement(new GenOp("   @;\r\n", assignColor(vertColor, Material::Mul, NULL, ShaderFeature::RenderTarget1)));
+   else
+      meta->addStatement(new GenOp("   @;\r\n", assignColor(vertColor, Material::Mul)));
    output = meta;
 }
 
@@ -2085,10 +2088,14 @@ void ReflectCubeFeatHLSL::processPix(Vector<ShaderComponent*> &componentList,
       Var *metalness = (Var*)LangElement::find("metalness");
       if (metalness)
       {
-         meta->addStatement(new GenOp("   @ *= float4(@.rgb*@, @);\r\n", targ, texCube, metalness, metalness));
+         Var *dColor = new Var("dColor", "float3");
+         Var *reflectColor = new Var("reflectColor", "float3");
+         meta->addStatement(new GenOp("   @ = @.rgb - (@.rgb * @);\r\n", new DecOp(dColor), targ, targ, metalness));
+         meta->addStatement(new GenOp("   @ = @.rgb*(@).rgb*@;\r\n", new DecOp(reflectColor), targ, texCube, metalness));
+         meta->addStatement(new GenOp("   @.rgb = @+@;\r\n", targ, dColor, reflectColor));
       }
       else if (lerpVal)
-         meta->addStatement(new GenOp("   @ *= float4(@.rgb*@.a, @.a);\r\n", targ, texCube, lerpVal, lerpVal));
+         meta->addStatement(new GenOp("   @ *= float4(@.rgb*@.a, @.a);\r\n", targ, texCube, lerpVal, targ));
       else
          meta->addStatement(new GenOp("   @.rgb *= @.rgb;\r\n", targ, texCube));
    }
@@ -2335,13 +2342,18 @@ void RTLightingFeatHLSL::processPix(   Vector<ShaderComponent*> &componentList,
       }
    }
 
-   Var *specularColor = (Var*)LangElement::find( "specularColor" );
-   if ( !specularColor )
+   Var *metalness = (Var*)LangElement::find("metalness");
+   if (!fd.features[MFT_SpecularMap])
    {
-      specularColor  = new Var( "specularColor", "float4" );
-      specularColor->uniform = true;
-      specularColor->constSortPos = cspPotentialPrimitive;
+      if (!metalness)
+      {
+         metalness = new Var("metalness", "float");
+         metalness->uniform = true;
+         metalness->constSortPos = cspPotentialPrimitive;
+      }
    }
+
+   Var *albedo = (Var*)LangElement::find(getOutputTargetVarName(ShaderFeature::DefaultTarget));
 
    Var *ambient  = new Var( "ambient", "float4" );
    ambient->uniform = true;
@@ -2349,10 +2361,10 @@ void RTLightingFeatHLSL::processPix(   Vector<ShaderComponent*> &componentList,
 
    // Calculate the diffuse shading and specular powers.
    meta->addStatement( new GenOp( "   compute4Lights( @, @, @, @,\r\n"
-                                  "      @, @, @, @, @, @, @, @,\r\n"
+                                  "      @, @, @, @, @, @, @, @, @,\r\n"
                                   "      @, @ );\r\n", 
       wsView, wsPosition, wsNormal, lightMask,
-      inLightPos, inLightInvRadiusSq, inLightColor, inLightSpotDir, inLightSpotAngle, lightSpotFalloff, smoothness, specularColor,
+      inLightPos, inLightInvRadiusSq, inLightColor, inLightSpotDir, inLightSpotAngle, lightSpotFalloff, smoothness, metalness, albedo,
       rtShading, specular ) );
 
    // Apply the lighting to the diffuse color.
@@ -3006,7 +3018,7 @@ void DeferredSkyHLSL::processVert( Vector<ShaderComponent*> &componentList,
 {
    Var *outPosition = (Var*)LangElement::find( "hpos" );
    MultiLine *meta = new MultiLine;
-   meta->addStatement( new GenOp( "   @.w = @.z;\r\n", outPosition, outPosition ) );
+   //meta->addStatement( new GenOp( "   @.w = @.z;\r\n", outPosition, outPosition ) );
 
    output = meta;
 }

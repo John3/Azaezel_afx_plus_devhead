@@ -1194,7 +1194,10 @@ void DiffuseVertColorFeatureGLSL::processPix(   Vector<ShaderComponent*> &compon
    }
    
    MultiLine* meta = new MultiLine;
-   meta->addStatement( new GenOp( "   @;\r\n", assignColor( vertColor, Material::Mul ) ) );
+   if (fd.features[MFT_isDeferred])
+      meta->addStatement(new GenOp("   @;\r\n", assignColor(vertColor, Material::Mul, NULL, ShaderFeature::RenderTarget1)));
+   else
+      meta->addStatement(new GenOp("   @;\r\n", assignColor(vertColor, Material::Mul)));
    output = meta;
 }
 
@@ -1895,14 +1898,20 @@ void ReflectCubeFeatGLSL::processPix(  Vector<ShaderComponent*> &componentList,
    }
    else
    {
+      meta->addStatement(new GenOp("   //forward lit cubemapping\r\n"));
       targ = (Var*)LangElement::find(getOutputTargetVarName(ShaderFeature::DefaultTarget));
+
       Var *metalness = (Var*)LangElement::find("metalness");
       if (metalness)
       {
-         meta->addStatement(new GenOp("   @ *= vec4(@.rgb*@, @);\r\n", targ, texCube, metalness, metalness));
+         Var *dColor = new Var("dColor", "vec3");
+         Var *envColor = new Var("envColor", "vec3");
+         meta->addStatement(new GenOp("   @ = @.rgb - (@.rgb * @);\r\n", new DecOp(dColor), targ, targ, metalness));
+         meta->addStatement(new GenOp("   @ = @.rgb*(@).rgb;\r\n", new DecOp(envColor), targ, texCube));
+         meta->addStatement(new GenOp("   @.rgb = toLinear(@)+@*@;\r\n", targ, dColor, envColor, metalness));
       }
       else if (lerpVal)
-         meta->addStatement(new GenOp("   @ *= vec4(@.rgb*@.a, @.a);\r\n", targ, texCube, lerpVal, lerpVal));
+         meta->addStatement(new GenOp("   @ *= vec4(@.rgb*@.a, @.a);\r\n", targ, texCube, lerpVal, targ));
       else
          meta->addStatement(new GenOp("   @.rgb *= @.rgb;\r\n", targ, texCube));
    }
@@ -2818,7 +2827,7 @@ void DeferredSkyGLSL::processVert( Vector<ShaderComponent*> &componentList,
 {
    Var *outPosition = (Var*)LangElement::find( "gl_Position" );
    MultiLine *meta = new MultiLine;
-   meta->addStatement( new GenOp( "   @.w = @.z;\r\n", outPosition, outPosition ) );
+   //meta->addStatement( new GenOp( "   @.w = @.z;\r\n", outPosition, outPosition ) );
 
    output = meta;
 }

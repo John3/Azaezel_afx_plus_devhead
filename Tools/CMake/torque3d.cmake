@@ -64,7 +64,6 @@ option(TORQUE_EXTENDED_MOVE "Extended move support" OFF)
 mark_as_advanced(TORQUE_EXTENDED_MOVE)
 if(WIN32)
 	option(TORQUE_SDL "Use SDL for window and input" OFF)
-	mark_as_advanced(TORQUE_SDL)
 else()
 	set(TORQUE_SDL ON) # we need sdl to work on Linux/Mac
 endif()
@@ -196,9 +195,16 @@ addPath("${srcDir}/windowManager/test")
 addPath("${srcDir}/math")
 addPath("${srcDir}/math/util")
 addPath("${srcDir}/math/test")
+
 addPath("${srcDir}/platform")
-addPath("${srcDir}/cinterface")
+if(NOT TORQUE_SDL) 
+   set(BLACKLIST "fileDialog.cpp" )
+endif()
 addPath("${srcDir}/platform/nativeDialogs")
+set(BLACKLIST "" )
+
+addPath("${srcDir}/cinterface")
+
 if( NOT TORQUE_DEDICATED )
     addPath("${srcDir}/platform/menus")
 endif()
@@ -366,6 +372,28 @@ if(TORQUE_SDL)
        else()
          set(ENV{LDFLAGS} "${CXX_FLAG32} ${TORQUE_ADDITIONAL_LINKER_FLAGS}")
        endif()
+
+       find_package(PkgConfig REQUIRED)
+       pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+
+       # Setup CMake to use GTK+, tell the compiler where to look for headers
+       # and to the linker where to look for libraries
+       include_directories(${GTK3_INCLUDE_DIRS})
+       link_directories(${GTK3_LIBRARY_DIRS})
+
+       # Add other flags to the compiler
+       add_definitions(${GTK3_CFLAGS_OTHER})
+
+       set(BLACKLIST "nfd_win.cpp"  )
+       addLib(nativeFileDialogs)
+
+       set(BLACKLIST ""  )
+       target_link_libraries(nativeFileDialogs ${GTK3_LIBRARIES})
+ 	else()
+ 	   set(BLACKLIST "nfd_gtk.c" )
+ 	   addLib(nativeFileDialogs)
+       set(BLACKLIST ""  )
+ 	   addLib(comctl32)	   
     endif()
     
     #override and hide SDL2 cache variables
@@ -389,7 +417,11 @@ endforeach()
 ###############################################################################
 if(WIN32)
     addPath("${srcDir}/platformWin32")
+    if(TORQUE_SDL) 
+ 		set(BLACKLIST "fileDialog.cpp" )
+ 	endif()
     addPath("${srcDir}/platformWin32/nativeDialogs")
+    set(BLACKLIST "" )
     addPath("${srcDir}/platformWin32/menus")
     addPath("${srcDir}/platformWin32/threads")
     addPath("${srcDir}/platformWin32/videoInfo")
@@ -480,12 +512,9 @@ if( TORQUE_OPENGL )
     if( TORQUE_OPENGL AND NOT TORQUE_DEDICATED )
         addPath("${srcDir}/gfx/gl")
         addPath("${srcDir}/gfx/gl/tGL")        
-    addPath("${srcDir}/shaderGen/GLSL")
+        addPath("${srcDir}/shaderGen/GLSL")
         addPath("${srcDir}/terrain/glsl")
         addPath("${srcDir}/forest/glsl")    
-
-    # glew
-    LIST(APPEND ${PROJECT_NAME}_files "${libDir}/glew/src/glew.c")
     endif()
     
     if(WIN32 AND NOT TORQUE_SDL)
@@ -538,6 +567,9 @@ addLib(squish)
 addLib(collada)
 addLib(pcre)
 addLib(convexDecomp)
+if (TORQUE_OPENGL)
+   addLib(epoxy)
+endif()
 
 if(WIN32)
     # copy pasted from T3D build system, some might not be needed
@@ -547,6 +579,13 @@ if(WIN32)
    
    if(TORQUE_OPENGL)
       addLib(OpenGL32.lib)
+   endif()
+		
+   # JTH: DXSDK is compiled with older runtime, and MSVC 2015+ is when __vsnprintf is undefined.
+   # This is a workaround by linking with the older legacy library functions.
+   # See this for more info: http://stackoverflow.com/a/34230122
+   if (MSVC14)
+      addLib(legacy_stdio_definitions.lib)
    endif()
 endif()
 
@@ -597,9 +636,6 @@ endif()
 
 if(TORQUE_OPENGL)
 	addDef(TORQUE_OPENGL)
-   if(WIN32)
-      addDef(GLEW_STATIC)
-    endif()
 endif()
 
 if(TORQUE_SDL)
@@ -630,17 +666,17 @@ addInclude("${libDir}/libogg/include")
 addInclude("${libDir}/opcode")
 addInclude("${libDir}/collada/include")
 addInclude("${libDir}/collada/include/1.4")
+if(TORQUE_SDL)
+   addInclude("${libDir}/nativeFileDialogs/include")
+endif()
 if(TORQUE_OPENGL)
-	addInclude("${libDir}/glew/include")
+	addInclude("${libDir}/epoxy/include")
+	addInclude("${libDir}/epoxy/src")
 endif()
 
 if(UNIX)
 	addInclude("/usr/include/freetype2/freetype")
 	addInclude("/usr/include/freetype2")
-endif()
-
-if(TORQUE_OPENGL)
-	addInclude("${libDir}/glew/include")
 endif()
 
 # external things

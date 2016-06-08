@@ -1011,9 +1011,6 @@ function MaterialEditorGui::guiSync( %this, %material )
    MaterialEditorPropertiesWindow-->vertLitCheckbox.setValue((%material).vertLit[%layer]);
    MaterialEditorPropertiesWindow-->vertColorSwatch.color = (%material).vertColor[%layer];
    MaterialEditorPropertiesWindow-->subSurfaceCheckbox.setValue((%material).subSurface[%layer]);
-   MaterialEditorPropertiesWindow-->subSurfaceColorSwatch.color = (%material).subSurfaceColor[%layer];
-   MaterialEditorPropertiesWindow-->subSurfaceRolloffTextEdit.setText((%material).subSurfaceRolloff[%layer]);
-   MaterialEditorPropertiesWindow-->minnaertTextEdit.setText((%material).minnaertConstant[%layer]);
 
    // Animation properties
    MaterialEditorPropertiesWindow-->RotationAnimation.setValue(0);
@@ -2489,4 +2486,40 @@ function MaterialEditorGui::setMetalChan(%this, %value)
 {
    MaterialEditorGui.updateActiveMaterial("metalChan[" @ MaterialEditorGui.currentLayer @ "]", %value);   
    MaterialEditorGui.guiSync( materialEd_previewMaterial );
+}
+
+function MaterialEditorGui::saveCompositeMap(%this)
+{
+    %saveAs = "";
+    %dlg = new SaveFileDialog()
+    {
+        Filters        = "png";
+        DefaultPath    = EditorSettings.value("art/shapes/textures");
+        ChangePath     = false;
+        OverwritePrompt   = true;
+    };
+
+    %ret = %dlg.Execute();
+    if(%ret)
+    {
+        // Immediately override/set the levelsDirectory
+        EditorSettings.setValue( "art/shapes/textures", collapseFilename(filePath( %dlg.FileName )) );
+        %saveAs = %dlg.FileName;
+    }
+    
+    %material = %this.currentMaterial;
+    %layer = %this.currentLayer;
+   
+    %roughMap = %material.roughMap[%layer];
+    %aoMap = %material.aoMap[%layer];
+    %metalMap = %material.metalMap[%layer];
+    
+    %smooth = %material.SmoothnessChan[%layer];
+    %ao = %material.AOChan[%layer];
+    %metal = %material.metalChan[%layer];
+    
+    %channelKey = %smooth SPC %ao SPC %metal SPC 3;
+    error("Storing: \"" @ %roughMap @"\" \""@  %aoMap @"\" \""@ %metalMap @"\" \""@ %channelKey @"\" \""@ %saveAs @"\"");
+    saveCompositeTexture(%roughMap,%aoMap,%metalMap,"",%channelKey, %saveAs);
+    %dlg.delete();
 }

@@ -465,12 +465,12 @@ void GFXDrawUtil::drawRect( const Point2F &upperLeft, const Point2F &lowerRight,
 
    verts[0].point.set( upperLeft.x + ulOffset + nw.x, upperLeft.y + ulOffset + nw.y, 0.0f );
    verts[1].point.set( upperLeft.x + ulOffset - nw.x, upperLeft.y + ulOffset - nw.y, 0.0f );
-   verts[2].point.set( lowerRight.x + ne.x, upperLeft.y + ulOffset + ne.y, 0.0f );
-   verts[3].point.set( lowerRight.x - ne.x, upperLeft.y + ulOffset - ne.y, 0.0f );
-   verts[4].point.set( lowerRight.x - nw.x, lowerRight.y - nw.y, 0.0f );
-   verts[5].point.set( lowerRight.x + nw.x, lowerRight.y + nw.y, 0.0f );
-   verts[6].point.set( upperLeft.x + ulOffset - ne.x, lowerRight.y - ne.y, 0.0f );
-   verts[7].point.set( upperLeft.x + ulOffset + ne.x, lowerRight.y + ne.y, 0.0f );
+   verts[2].point.set( lowerRight.x + ulOffset + ne.x, upperLeft.y + ulOffset + ne.y, 0.0f);
+   verts[3].point.set( lowerRight.x + ulOffset - ne.x, upperLeft.y + ulOffset - ne.y, 0.0f);
+   verts[4].point.set( lowerRight.x + ulOffset - nw.x, lowerRight.y + ulOffset - nw.y, 0.0f);
+   verts[5].point.set( lowerRight.x + ulOffset + nw.x, lowerRight.y + ulOffset + nw.y, 0.0f);
+   verts[6].point.set( upperLeft.x + ulOffset - ne.x, lowerRight.y + ulOffset - ne.y, 0.0f);
+   verts[7].point.set( upperLeft.x + ulOffset + ne.x, lowerRight.y + ulOffset + ne.y, 0.0f);
    verts[8].point.set( upperLeft.x + ulOffset + nw.x, upperLeft.y + ulOffset + nw.y, 0.0f ); // same as 0
    verts[9].point.set( upperLeft.x + ulOffset - nw.x, upperLeft.y + ulOffset - nw.y, 0.0f ); // same as 1
 
@@ -1015,7 +1015,7 @@ void GFXDrawUtil::_drawSolidPolyhedron( const GFXStateBlockDesc &desc, const Any
 
    // Allocate a temp buffer for the face indices.
 
-   const U32 numIndices = poly.getNumEdges() * 2;
+   const U32 numIndices = poly.getNumEdges() * 3;
    const U32 numPlanes = poly.getNumPlanes();
 
    GFXPrimitiveBufferHandle prims( mDevice, numIndices, 0, GFXBufferTypeVolatile );
