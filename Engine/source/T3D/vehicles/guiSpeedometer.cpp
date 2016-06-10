@@ -25,6 +25,7 @@
 #include "T3D/gameBase/gameConnection.h"
 #include "T3D/vehicles/vehicle.h"
 #include "gfx/primBuilder.h"
+#include "gfx/gfxDrawUtil.h"
 
 //-----------------------------------------------------------------------------
 /// A Speedometer control.
@@ -45,11 +46,19 @@ class GuiSpeedometerHud : public GuiBitmapCtrl
    F32   mNeedleLength;
    F32   mNeedleWidth;
    F32   mTailLength;
+   F32 mExplicitSpeed;
 
    GFXStateBlockRef mBlendSB;
 
+   StringTableEntry  mNeedleBitmap;
+   GFXTexHandle      mNeedleTextureHandle;
+
 public:
    GuiSpeedometerHud();
+   bool onWake();
+
+   void setNeedleBitmap(const char *name);
+   void draw2DSquare(const Point2F &screenPoint, F32 length, F32 width, GFXTextureObject* texture, F32 spinAngle = 0.0f);
 
    void onRender( Point2I, const RectI &);
    static void initPersistFields();
@@ -58,6 +67,15 @@ public:
    DECLARE_DESCRIPTION( "Displays the speed of the current Vehicle-based control object." );
 };
 
+bool GuiSpeedometerHud::onWake()
+{
+   if (!Parent::onWake())
+      return false;
+   setActive(true);
+
+   setNeedleBitmap(mNeedleBitmap);
+   return true;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -104,6 +122,11 @@ GuiSpeedometerHud::GuiSpeedometerHud()
    mNeedleLength = 10;
    mTailLength = 5;
    mColor.set(1,0,0,1);
+
+   mNeedleBitmap = StringTable->insert("");
+   mNeedleTextureHandle = NULL;
+
+   mExplicitSpeed = -1;
 }
 
 void GuiSpeedometerHud::initPersistFields()
@@ -138,9 +161,97 @@ void GuiSpeedometerHud::initPersistFields()
    addField("tail", TypeF32, Offset( mTailLength, GuiSpeedometerHud ),
       "Length of the needle from center to tail" );
 
+   addField("NeedleBitmap", TypeFilename, Offset(mNeedleBitmap, GuiSpeedometerHud));
+
+   addField("ExplicitSpeed", TypeF32, Offset(mExplicitSpeed, GuiSpeedometerHud),
+      "forced speed value");
    endGroup("Needle");
 
    Parent::initPersistFields();
+}
+
+void GuiSpeedometerHud::draw2DSquare(const Point2F &screenPoint, F32 length, F32 width, GFXTextureObject* texture, F32 spinAngle)
+{
+   if (texture == NULL)
+      return;
+
+   width *= 0.5;
+
+   Point3F offset(screenPoint.x, screenPoint.y, 0.0);
+
+   GFXVertexBufferHandle<GFXVertexPCT> verts(GFX, 4, GFXBufferTypeVolatile);
+   verts.lock();
+
+   verts[0].point.set(-width, -length, 0.0f);
+   verts[1].point.set(-width, length, 0.0f);
+   verts[2].point.set(width, -length, 0.0f);
+   verts[3].point.set(width, length, 0.0f);
+   
+   GFXVertexColor mBitmapModulation;
+   mBitmapModulation.set(0xFF, 0xFF, 0xFF, 0xFF);
+   verts[0].color = verts[1].color = verts[2].color = verts[3].color = mBitmapModulation;
+
+   if (spinAngle == 0.0f)
+   {
+      for (S32 i = 0; i < 4; i++)
+         verts[i].point += offset;
+
+      verts[0].texCoord.set(0, 0);
+      verts[1].texCoord.set(1, 0);
+      verts[2].texCoord.set(0, 1);
+      verts[3].texCoord.set(1, 1);
+   }
+   else
+   {
+      MatrixF rotMatrix(EulerF(0.0, 0.0, spinAngle));
+
+      for (S32 i = 0; i < 4; i++)
+      {
+         rotMatrix.mulP(verts[i].point);
+         verts[i].point += offset;
+      }
+
+      verts[0].texCoord.set(0, 0);
+      verts[1].texCoord.set(1, 0);
+      verts[2].texCoord.set(0, 1);
+      verts[3].texCoord.set(1, 1);
+   }
+
+   verts.unlock();
+   GFX->setVertexBuffer(verts);
+
+   GFXStateBlockDesc rectFill;
+   rectFill.setCullMode(GFXCullNone);
+   rectFill.setZReadWrite(false);
+   rectFill.setBlend(true, GFXBlendSrcAlpha, GFXBlendInvSrcAlpha);
+   GFXStateBlockRef mRectFillSB = GFX->createStateBlock(rectFill);   
+   GFX->setStateBlock(mRectFillSB);
+   
+   GFX->setTexture(0, texture);
+   GFX->setupGenericShaders(GFXDevice::GSModColorTexture);
+   GFX->drawPrimitive(GFXTriangleStrip, 0, 2);
+}
+
+//---------------------------------------------------------------------------
+void GuiSpeedometerHud::setNeedleBitmap(const char *name)
+{
+   mNeedleBitmap = StringTable->insert(name);
+
+   if (*mNeedleBitmap)
+      mNeedleTextureHandle = GFXTexHandle(mNeedleBitmap, &GFXDefaultStaticDiffuseProfile, "Adescription");
+   else
+      // Reset handles if UI object is hidden
+      mNeedleTextureHandle = NULL;
+
+   setUpdate();
+}
+
+//------------------------------------------------------------------------
+// script interface
+ConsoleMethod(GuiSpeedometerHud, setNeedleBitmap, void, 3, 3, "(string filename)"
+   "Set the bitmap for the needle.")
+{
+   object->setNeedleBitmap(argv[2]);
 }
 
 
@@ -151,18 +262,23 @@ void GuiSpeedometerHud::initPersistFields()
 */
 void GuiSpeedometerHud::onRender(Point2I offset, const RectI &updateRect)
 {
-   // Must have a connection and player control object
-   GameConnection* conn = GameConnection::getConnectionToServer();
-   if (!conn)
-      return;
-   Vehicle* control = dynamic_cast<Vehicle*>(conn->getControlObject());
-   if (!control)
-      return;
+   if (mExplicitSpeed == -1)
+   {
+      // Must have a connection and player control object
+      GameConnection* conn = GameConnection::getConnectionToServer();
+      if (!conn)
+         return;
+      ShapeBase* control = dynamic_cast<ShapeBase*>(conn->getControlObject());
+      if (!control)
+         return;
+      // Use the vehicle's velocity as its speed...
+      mSpeed = control->getVelocity().len();
+   }
+   else
+      mSpeed = mExplicitSpeed;
 
    Parent::onRender(offset,updateRect);
 
-   // Use the vehicle's velocity as its speed...
-   mSpeed = control->getVelocity().len();
    if (mSpeed > mMaxSpeed)
       mSpeed = mMaxSpeed;
 
@@ -174,6 +290,8 @@ void GuiSpeedometerHud::onRender(Point2I offset, const RectI &updateRect)
       center.x = getExtent().x / 2.0f;
       center.y = getExtent().y / 2.0f;
    }
+   center.x += offset.x;
+   center.y += offset.y;
    MatrixF newMat(1);
 
    newMat.setPosition(Point3F(getLeft() + center.x, getTop() + center.y, 0.0f));
@@ -192,21 +310,8 @@ void GuiSpeedometerHud::onRender(Point2I offset, const RectI &updateRect)
       mBlendSB = GFX->createStateBlock(desc);
    }
 
-   GFX->setStateBlock(mBlendSB);
+   draw2DSquare(center, mNeedleLength, mNeedleWidth, mNeedleTextureHandle, mDegToRad(rotation));
 
-   GFX->setTexture(0, NULL);
-
-   PrimBuild::begin(GFXLineStrip, 5);
-   PrimBuild::color4f(mColor.red, mColor.green, mColor.blue, mColor.alpha);
-
-   PrimBuild::vertex2f(+mNeedleLength,-mNeedleWidth);
-   PrimBuild::vertex2f(+mNeedleLength,+mNeedleWidth);
-   PrimBuild::vertex2f(-mTailLength  ,+mNeedleWidth);
-   PrimBuild::vertex2f(-mTailLength  ,-mNeedleWidth);
-
-   //// Get back to the start!
-   PrimBuild::vertex2f(+mNeedleLength,-mNeedleWidth);
-
-   PrimBuild::end();
+   GFX->popWorldMatrix();
 }
 
