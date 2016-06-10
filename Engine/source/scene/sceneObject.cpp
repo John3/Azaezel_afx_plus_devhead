@@ -156,6 +156,7 @@ SceneObject::SceneObject()
    // AFX CODE BLOCK (obj-select) <<
    mSelectionFlags = 0;
    // AFX CODE BLOCK (obj-select) >>
+   mPathfindingIgnore = false;
 }
 
 //-----------------------------------------------------------------------------
