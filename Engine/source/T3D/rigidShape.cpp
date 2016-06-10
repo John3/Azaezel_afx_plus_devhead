@@ -733,6 +733,8 @@ void RigidShape::onRemove()
 void RigidShape::processTick(const Move* move)
 {     
    Parent::processTick(move);
+   if ( isMounted() )
+      return;
 
    // Warp to catch up to server
    if (mDelta.warpCount < mDelta.warpTicks) 
@@ -796,6 +798,8 @@ void RigidShape::processTick(const Move* move)
 void RigidShape::interpolateTick(F32 dt)
 {     
    Parent::interpolateTick(dt);
+   if ( isMounted() )
+      return;
 
    if(dt == 0.0f)
       setRenderPosition(mDelta.pos, mDelta.rot[1]);
@@ -812,6 +816,8 @@ void RigidShape::interpolateTick(F32 dt)
 void RigidShape::advanceTime(F32 dt)
 {     
    Parent::advanceTime(dt);
+   if ( isMounted() )
+      return;
 
    updateFroth(dt);
 
