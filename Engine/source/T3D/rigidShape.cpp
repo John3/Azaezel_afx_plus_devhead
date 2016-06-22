@@ -821,6 +821,9 @@ void RigidShape::advanceTime(F32 dt)
 
    updateFroth(dt);
 
+   if ( isMounted() )
+      return;
+
    // Update 3rd person camera offset.  Camera update is done
    // here as it's a client side only animation.
    mCameraOffset -=

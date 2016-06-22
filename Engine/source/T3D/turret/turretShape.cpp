@@ -672,19 +672,11 @@ void TurretShape::advanceTime(F32 dt)
       }
    }
 
-   // If there is a recoil or image-based thread then
-   // we also need to update the nodes.
-   if (mRecoilThread || mImageStateThread)
-      updateNodes = true;
-
    Parent::advanceTime(dt);
 
    updateAnimation(dt);
 
-   if (updateNodes)
-   {
-      _updateNodes(mRot);
-   }
+   _setRotation(mRot);
 }
 
 void TurretShape::setTransform( const MatrixF& mat )

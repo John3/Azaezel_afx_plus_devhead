@@ -556,7 +556,7 @@ void Item::processTick(const Move* move)
 {
    Parent::processTick(move);
 
-   if (isMounted())
+   if ( isMounted() )
       return;
 
    //
