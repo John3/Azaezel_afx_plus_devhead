@@ -38,6 +38,8 @@
 
 #ifndef _CUBEMAPDATA_H_
 #include "gfx/sim/cubemapData.h"
+#endif
+
 #ifndef _GFXTEXTUREHANDLE_H_
 #include "gfx/gfxTextureHandle.h"
 #endif
