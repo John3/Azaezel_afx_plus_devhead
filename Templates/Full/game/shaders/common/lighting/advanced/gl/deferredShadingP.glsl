@@ -29,23 +29,32 @@ uniform sampler2D colorBufferTex;
 uniform sampler2D directLightingBuffer;
 uniform sampler2D matInfoTex;
 uniform sampler2D indirectLightingBuffer;
-uniform sampler2D prepassTex;
+uniform sampler2D deferredTex;
 
 out vec4 OUT_col;
 
 void main()
 {
-   float depth = prepassUncondition( prepassTex, uv0 ).w;
+   float depth = deferredUncondition( deferredTex, uv0 ).w;
    if (depth>0.9999)
    {
       OUT_col = vec4(0.0);
       return;
    }
    
-   vec4 directLighting = texture( directLightingBuffer, uv0 ); //shadowmap*specular
    vec3 colorBuffer = texture( colorBufferTex, uv0 ).rgb; //albedo
+   vec4 matInfo = texture( matInfoTex, uv0 ); //flags|smoothness|ao|metallic
+   bool emissive = getFlag(matInfo.r, 0);
+   if (emissive)
+   {
+      OUT_col = float4(colorBuffer, 1.0);
+	  return;
+   }
+   
+   vec4 directLighting = texture( directLightingBuffer, uv0 ); //shadowmap*specular
+   
    vec3 indirectLighting = texture( indirectLightingBuffer, uv0 ).rgb; //environment mapping*lightmaps
-   float metalness = texture( matInfoTex, uv0 ).a; //flags|smoothness|ao|metallic
+   float metalness = matInfo.a;
       
    float frez = max(0.04,directLighting.a);
    

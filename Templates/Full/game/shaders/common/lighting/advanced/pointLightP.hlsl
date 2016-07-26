@@ -106,7 +106,7 @@ TORQUE_UNIFORM_SAMPLERCUBE(cookieMap, 3);
 
 #endif
 
-TORQUE_UNIFORM_SAMPLER2D(prePassBuffer, 0);
+TORQUE_UNIFORM_SAMPLER2D(deferredBuffer, 0);
 
 #ifdef SHADOW_CUBE
 TORQUE_UNIFORM_SAMPLERCUBE(shadowMap, 1);
@@ -142,13 +142,15 @@ float4 main( ConvexConnectP IN ) : TORQUE_TARGET0
    float3 ssPos = IN.ssPos.xyz / IN.ssPos.w;
    float2 uvScene = getUVFromSSPos( ssPos, rtParams0 );
    
-   // Emissive.
-   float4 matInfo = TORQUE_TEX2D( matInfoBuffer, uvScene );   
-   bool emissive = getFlag( matInfo.r, 0 );
-   if ( emissive )
+   // Matinfo flags
+   float4 matInfo = TORQUE_TEX2D( matInfoBuffer, uvScene ); 
+   //early out if emissive
+   bool emissive = getFlag(matInfo.r, 0);
+   if (emissive)
    {
-       return float4(0.0, 0.0, 0.0, 0.0);
+      return float4(0.0, 0.0, 0.0, 0.0);
    }
+
    float4 colorSample = TORQUE_TEX2D( colorBuffer, uvScene );
    float3 subsurface = float3(0.0,0.0,0.0); 
    if (getFlag( matInfo.r, 1 ))
@@ -161,9 +163,9 @@ float4 main( ConvexConnectP IN ) : TORQUE_TARGET0
 	}
    
    // Sample/unpack the normal/z data
-   float4 prepassSample = TORQUE_PREPASS_UNCONDITION( prePassBuffer, uvScene );
-   float3 normal = prepassSample.rgb;
-   float depth = prepassSample.a;
+   float4 deferredSample = TORQUE_DEFERRED_UNCONDITION( deferredBuffer, uvScene );
+   float3 normal = deferredSample.rgb;
+   float depth = deferredSample.a;
    
    // Eye ray - Eye -> Pixel
    float3 eyeRay = getDistanceVectorToPlane( -vsFarPlane.w, IN.vsEyeDir.xyz, vsFarPlane );

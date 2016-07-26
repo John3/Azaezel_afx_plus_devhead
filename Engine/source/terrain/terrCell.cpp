@@ -1082,7 +1082,7 @@ void TerrCell::preloadMaterials()
 
       if (  GFX->getPixelShaderVersion() > 2.0f && 
             dStrcmp( LIGHTMGR->getId(), "BLM" ) != 0)
-         material->getPrePassMat();
+         material->getDeferredMat();
    }
 
    for ( U32 i = 0; i < 4; i++ )

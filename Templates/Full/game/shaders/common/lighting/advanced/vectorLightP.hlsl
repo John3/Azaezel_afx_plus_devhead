@@ -30,7 +30,7 @@
 #include "../shadowMap/shadowMapIO_HLSL.h"
 #include "softShadow.hlsl"
 
-TORQUE_UNIFORM_SAMPLER2D(prePassBuffer, 0);
+TORQUE_UNIFORM_SAMPLER2D(deferredBuffer, 0);
 TORQUE_UNIFORM_SAMPLER2D(shadowMap, 1);
 TORQUE_UNIFORM_SAMPLER2D(dynamicShadowMap, 2);
 
@@ -194,14 +194,15 @@ float4 AL_VectorLightShadowCast( TORQUE_SAMPLER2D(sourceShadowMap),
 
 float4 main( FarFrustumQuadConnectP IN ) : TORQUE_TARGET0
 {
-   // Emissive.
-   float4 matInfo = TORQUE_TEX2D( matInfoBuffer, IN.uv0 );   
-   bool emissive = getFlag( matInfo.r, 0 );
-   if ( emissive )
+   // Matinfo flags
+   float4 matInfo = TORQUE_TEX2D( matInfoBuffer, IN.uv0 );
+   //early out if emissive
+   bool emissive = getFlag(matInfo.r, 0);
+   if (emissive)
    {
-       return float4(1.0, 1.0, 1.0, 0.0);
+      return float4(0.0, 0.0, 0.0, 0.0);
    }
-   
+
    float4 colorSample = TORQUE_TEX2D( colorBuffer, IN.uv0 );
    float3 subsurface = float3(0.0,0.0,0.0); 
    if (getFlag( matInfo.r, 1 ))
@@ -213,9 +214,9 @@ float4 main( FarFrustumQuadConnectP IN ) : TORQUE_TARGET0
          subsurface = float3(0.337255, 0.772549, 0.262745);
 	}
    // Sample/unpack the normal/z data
-   float4 prepassSample = TORQUE_PREPASS_UNCONDITION( prePassBuffer, IN.uv0 );
-   float3 normal = prepassSample.rgb;
-   float depth = prepassSample.a;
+   float4 deferredSample = TORQUE_DEFERRED_UNCONDITION( deferredBuffer, IN.uv0 );
+   float3 normal = deferredSample.rgb;
+   float depth = deferredSample.a;
 
    // Use eye ray to get ws pos
    float4 worldPos = float4(eyePosWorld + IN.wsEyeRay * depth, 1.0f);

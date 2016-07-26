@@ -28,18 +28,26 @@ TORQUE_UNIFORM_SAMPLER2D(colorBufferTex,0);
 TORQUE_UNIFORM_SAMPLER2D(directLightingBuffer,1);
 TORQUE_UNIFORM_SAMPLER2D(matInfoTex,2);
 TORQUE_UNIFORM_SAMPLER2D(indirectLightingBuffer,3);
-TORQUE_UNIFORM_SAMPLER2D(prepassTex,4);
+TORQUE_UNIFORM_SAMPLER2D(deferredTex,4);
 
 float4 main( PFXVertToPix IN) : TORQUE_TARGET0
 {        
-   float depth = TORQUE_PREPASS_UNCONDITION( prepassTex, IN.uv0 ).w;
+   float depth = TORQUE_DEFERRED_UNCONDITION( deferredTex, IN.uv0 ).w;
    if (depth>0.9999)
       return float4(0,0,0,0);
+
+   float3 colorBuffer = TORQUE_TEX2D( colorBufferTex, IN.uv0 ).rgb; //albedo
+   float4 matInfo = TORQUE_TEX2D(matInfoTex, IN.uv0); //flags|smoothness|ao|metallic
+
+   bool emissive = getFlag(matInfo.r, 0);
+   if (emissive)
+   {
+      return float4(colorBuffer, 1.0);
+   }
 	  
    float4 directLighting = TORQUE_TEX2D( directLightingBuffer, IN.uv0 ); //shadowmap*specular
-   float3 colorBuffer = TORQUE_TEX2D( colorBufferTex, IN.uv0 ).rgb; //albedo
    float3 indirectLighting = TORQUE_TEX2D( indirectLightingBuffer, IN.uv0 ).rgb; //environment mapping*lightmaps
-   float metalness = TORQUE_TEX2D( matInfoTex, IN.uv0 ).a; //flags|smoothness|ao|metallic
+   float metalness = matInfo.a;
 	  
    float frez = max(0.04,directLighting.a);
    

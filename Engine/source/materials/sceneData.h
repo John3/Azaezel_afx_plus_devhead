@@ -49,9 +49,9 @@ struct SceneData
       /// @see RenderGlowMgr
       GlowBin,
 
-      /// The prepass render bin.
-      /// @RenderPrePassMgr
-      PrePassBin,
+      /// The deferred render bin.
+      /// @RenderDeferredMgr
+      DeferredBin,
 
       // AFX CODE BLOCK (selection-highlight) <<
       /// The selection-highlight render bin.  

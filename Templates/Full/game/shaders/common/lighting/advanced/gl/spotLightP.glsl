@@ -46,7 +46,7 @@ uniform sampler2D cookieMap;
 
 #endif
 
-uniform sampler2D prePassBuffer;
+uniform sampler2D deferredBuffer;
 uniform sampler2D shadowMap;
 uniform sampler2D dynamicShadowMap;
 
@@ -80,13 +80,14 @@ void main()
    vec3 ssPos = IN_ssPos.xyz / IN_ssPos.w;
    vec2 uvScene = getUVFromSSPos( ssPos, rtParams0 );
 
-   // Emissive.
-   vec4 matInfo = texture( matInfoBuffer, uvScene );   
-   bool emissive = getFlag( matInfo.r, 0 );
-   if ( emissive )
+   // Matinfo flags
+   vec4 matInfo = texture( matInfoBuffer, uvScene );
+   //early out if emissive
+   bool emissive = getFlag(matInfo.r, 0);
+   if (emissive)
    {
-       OUT_col = vec4(0.0, 0.0, 0.0, 0.0);
-	   return;
+      OUT_col = vec4(0.0, 0.0, 0.0, 0.0);
+      return;
    }
    
    vec4 colorSample = texture( colorBuffer, uvScene );
@@ -101,9 +102,9 @@ void main()
 	}
 	
    // Sample/unpack the normal/z data
-   vec4 prepassSample = prepassUncondition( prePassBuffer, uvScene );
-   vec3 normal = prepassSample.rgb;
-   float depth = prepassSample.a;
+   vec4 deferredSample = deferredUncondition( deferredBuffer, uvScene );
+   vec3 normal = deferredSample.rgb;
+   float depth = deferredSample.a;
    
    // Eye ray - Eye -> Pixel
    vec3 eyeRay = getDistanceVectorToPlane( -vsFarPlane.w, IN_vsEyeDir.xyz, vsFarPlane );
