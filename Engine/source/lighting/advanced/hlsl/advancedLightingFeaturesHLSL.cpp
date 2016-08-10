@@ -759,24 +759,19 @@ void DeferredMinnaertHLSL::processPix( Vector<ShaderComponent*> &componentList,
 
    // create texture var
    Var *deferredBuffer = new Var;
-   deferredBuffer->setType("sampler2D");
-   deferredBuffer->setName("deferredBuffer");
+   deferredBuffer->setType("SamplerState");
+   deferredBuffer->setName("prepassBuffer");
    deferredBuffer->uniform = true;
    deferredBuffer->sampler = true;
    deferredBuffer->constNum = Var::getTexUnitNum();     // used as texture unit num here
 
-   Var* deferredTex = NULL;
-   if (mIsDirect3D11)
-   {
-      deferredBuffer->setType("SamplerState");
-      deferredTex = new Var;
-      deferredTex->setName("deferredTex");
-      deferredTex->setType("Texture2D");
-      deferredTex->uniform = true;
-      deferredTex->texture = true;
-      deferredTex->constNum = deferredBuffer->constNum;
-   }
-
+   Var* deferredTex = new Var;
+   deferredTex->setName("prePassTex");
+   deferredTex->setType("Texture2D");
+   deferredTex->uniform = true;
+   deferredTex->texture = true;
+   deferredTex->constNum = deferredBuffer->constNum;
+   
    // Texture coord
    Var *uvScene = (Var*)LangElement::find("uvScene");
    AssertFatal(uvScene != NULL, "Unable to find UVScene, no RTLighting feature?");
@@ -790,10 +785,7 @@ void DeferredMinnaertHLSL::processPix( Vector<ShaderComponent*> &componentList,
 
    Var *d_NL_Att = (Var*)LangElement::find("d_NL_Att");
 
-   if (mIsDirect3D11)
-      meta->addStatement(new GenOp(avar("   float4 normalDepth = %s(@, ,@, @);\r\n", unconditionDeferredMethod.c_str()), deferredBuffer, deferredTex, uvScene));
-   else
-      meta->addStatement(new GenOp(avar("   float4 normalDepth = %s(@, @);\r\n", unconditionDeferredMethod.c_str()), deferredBuffer, uvScene));
+   meta->addStatement(new GenOp(avar("   float4 normalDepth = %s(@, ,@, @);\r\n", unconditionDeferredMethod.c_str()), deferredBuffer, deferredTex, uvScene));
 
    meta->addStatement( new GenOp( "   float vDotN = dot(normalDepth.xyz, @);\r\n", wsViewVec ) );
    meta->addStatement( new GenOp( "   float Minnaert = pow( @, @) * pow(vDotN, 1.0 - @);\r\n", d_NL_Att, minnaertConstant, minnaertConstant ) );
