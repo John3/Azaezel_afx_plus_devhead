@@ -760,18 +760,19 @@ void DeferredMinnaertHLSL::processPix( Vector<ShaderComponent*> &componentList,
    // create texture var
    Var *deferredBuffer = new Var;
    deferredBuffer->setType("SamplerState");
-   deferredBuffer->setName("prepassBuffer");
+   deferredBuffer->setType("sampler2D");
+   deferredBuffer->setName("deferredBuffer");
    deferredBuffer->uniform = true;
    deferredBuffer->sampler = true;
    deferredBuffer->constNum = Var::getTexUnitNum();     // used as texture unit num here
 
    Var* deferredTex = new Var;
-   deferredTex->setName("prePassTex");
+   deferredTex->setName("deferredTex");
    deferredTex->setType("Texture2D");
    deferredTex->uniform = true;
    deferredTex->texture = true;
    deferredTex->constNum = deferredBuffer->constNum;
-   
+
    // Texture coord
    Var *uvScene = (Var*)LangElement::find("uvScene");
    AssertFatal(uvScene != NULL, "Unable to find UVScene, no RTLighting feature?");
