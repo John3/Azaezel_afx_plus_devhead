@@ -481,7 +481,8 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
    }
 
    // Add to the blend total.
-   meta->addStatement( new GenOp( "   @ += @;\r\n", blendTotal, detailBlend ) );
+
+   meta->addStatement(new GenOp("   @ = max( @, @ );\r\n", blendTotal, blendTotal, detailBlend));
 
    // If we had a parallax feature... then factor in the parallax
    // amount so that it fades out with the layer blending.
@@ -800,26 +801,10 @@ void TerrainMacroMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentL
    }
 
    // Add to the blend total.
-   meta->addStatement( new GenOp( "   @ += @;\r\n", blendTotal, detailBlend ) );
-   
-   // Check to see if we have a gbuffer normal.
-   Var *gbNormal = (Var*)LangElement::find( "gbNormal" );
-   
-   // If we have a gbuffer normal and we don't have a
-   // normal map feature then we need to lerp in a 
-   // default normal else the normals below this layer
-   // will show thru.
-   if (  gbNormal && 
-      !fd.features.hasFeature( MFT_TerrainNormalMap, detailIndex ) )
-   {
-      Var *viewToTangent = getInViewToTangent( componentList );
-      
-      meta->addStatement( new GenOp( "   @ = lerp( @, @[2], min( @, @.w ) );\r\n", 
-         gbNormal, gbNormal, viewToTangent, detailBlend, inDet ) );
-   }
-   
-   Var *detailColor = (Var*)LangElement::find("macroColor");
-   if (!detailColor)
+   meta->addStatement(new GenOp("   @ = max( @, @ );\r\n", blendTotal, blendTotal, detailBlend));
+
+   Var *detailColor = (Var*)LangElement::find( "macroColor" ); 
+   if ( !detailColor )
    {
       detailColor = new Var;
       detailColor->setType( "float4" );

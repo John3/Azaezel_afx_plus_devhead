@@ -66,8 +66,6 @@ class MoveList;
 struct Move;
 struct AuthInfo;
 
-#define GameString TORQUE_APP_NAME
-
 // AFX CODE BLOCK (db-cache) <<
 //
 // To disable datablock caching, remove or comment out the AFX_CAP_DATABLOCK_CACHE define below.
