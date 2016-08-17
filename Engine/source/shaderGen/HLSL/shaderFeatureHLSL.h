@@ -671,5 +671,4 @@ public:
 
    virtual String getName() { return "Hardware Skinning"; }
 };
-
 #endif // _SHADERGEN_HLSL_SHADERFEATUREHLSL_H_

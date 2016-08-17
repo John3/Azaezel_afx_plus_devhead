@@ -269,8 +269,6 @@ void TerrainBaseMapFeatHLSL::processPix(  Vector<ShaderComponent*> &componentLis
    diffuseTex->constNum = diffuseMap->constNum;
    meta->addStatement(new GenOp("   @ = @.Sample( @, @.xy );\r\n", new DecOp(baseColor), diffuseTex, diffuseMap, texCoord));
 
-   meta->addStatement(new GenOp("   @ = toLinear(@);\r\n", baseColor, baseColor));
-
    ShaderFeature::OutputTarget target = ShaderFeature::DefaultTarget;
 
    if (fd.features.hasFeature(MFT_isDeferred))
@@ -802,7 +800,6 @@ void TerrainMacroMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentL
 
    // Add to the blend total.
    meta->addStatement(new GenOp("   @ = max( @, @ );\r\n", blendTotal, blendTotal, detailBlend));
-
    Var *detailColor = (Var*)LangElement::find( "macroColor" ); 
    if ( !detailColor )
    {

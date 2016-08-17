@@ -226,7 +226,9 @@ U32 LevelInfo::packUpdate(NetConnection *conn, U32 mask, BitStream *stream)
    stream->writeInt( mSoundDistanceModel, 1 );
 
    stream->write(mLevelEnvMapName);
+
    stream->write(mAccuTextureName);
+
    return retMask;
 }
 
@@ -271,8 +273,10 @@ void LevelInfo::unpackUpdate(NetConnection *conn, BitStream *stream)
 
       SFX->setDistanceModel( mSoundDistanceModel );
    }
+
    stream->read(&mLevelEnvMapName);
    setLevelEnvMap(mLevelEnvMapName);
+
    stream->read(&mAccuTextureName);
    setLevelAccuTexture(mAccuTextureName);
 }

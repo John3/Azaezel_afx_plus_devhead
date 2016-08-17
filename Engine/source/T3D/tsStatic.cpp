@@ -343,8 +343,8 @@ bool TSStatic::onAdd()
    // Accumulation and environment mapping
    if ( isClientObject() && mShapeInstance )
    {
-      AccumulationVolume::addObject(this);
       EnvVolume::addObject(this);
+      AccumulationVolume::addObject(this);
    }
 
    return true;
