@@ -253,7 +253,6 @@ void MatInstance::construct()
    mIsForwardLit = false;
    mIsValid = false;
    mIsHardwareSkinned = false;
-
    // AFX CODE BLOCK (selection-highlight) <<
    needsHighlighting = false;
    // AFX CODE BLOCK (selection-highlight) >>
