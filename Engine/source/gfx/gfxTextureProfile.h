@@ -103,7 +103,8 @@ public:
       /// This is mainly a depth buffer optimization.
       NoDiscard = BIT(11),
 
-      
+      /// Texture is managed by another process, thus should not be modified
+      NoModify = BIT(12)
 
    };
 
@@ -168,6 +169,7 @@ public:
    inline bool isPooled() const { return testFlag(Pooled); }
    inline bool canDiscard() const { return !testFlag(NoDiscard); }
    inline bool isSRGB() const { return testFlag(SRGB); }
+   inline bool canModify() const { return !testFlag(NoModify); }
 
 private:
    /// These constants control the packing for the profile; if you add flags, types, or

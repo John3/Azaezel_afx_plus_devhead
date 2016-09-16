@@ -104,7 +104,8 @@ class ColorF
                                       (alpha >= 0.0f && alpha <= 1.0f); }
    void clamp();
 
-   ColorF toSRGB();
+   ColorF toLinear() const;
+   ColorF toGamma() const;
 
    static const ColorF ZERO;
    static const ColorF ONE;
@@ -464,14 +465,14 @@ inline void ColorF::clamp()
       alpha = 0.0f;
 }
 
-inline ColorF ColorF::toSRGB()
+inline ColorF ColorF::toLinear() const
 {
-   ColorF sRGB;
-   sRGB.red = mFloatToSRGB(red);
-   sRGB.green = mFloatToSRGB(green);
-   sRGB.blue = mFloatToSRGB(blue);
-   sRGB.alpha = alpha;
-   return sRGB;
+   return ColorF(mPow(red, 2.2f), mPow(green, 2.2f), mPow(blue, 2.2f), alpha);
+}
+
+inline ColorF ColorF::toGamma() const
+{
+   return ColorF(mPow(red, 1.0f / 2.2f), mPow(green, 1.0f / 2.2f), mPow(blue, 1.0f / 2.2f), alpha);
 }
 
 //------------------------------------------------------------------------------
