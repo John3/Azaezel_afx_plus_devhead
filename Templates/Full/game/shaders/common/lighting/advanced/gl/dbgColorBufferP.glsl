@@ -25,7 +25,6 @@
 
 uniform sampler2D colorBufferTex;
 
-in vec2 uv0;
 out vec4 OUT_FragColor0;
 
 void main()

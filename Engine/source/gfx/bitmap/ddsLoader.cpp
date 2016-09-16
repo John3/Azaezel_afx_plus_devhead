@@ -440,7 +440,7 @@ bool DDSFile::readHeader(Stream &s)
          // GFXFormatA8
 
          if(pfBitCount == 32)
-            mFormat = GFXFormatR8G8B8A8;
+            mFormat = GFXFormatB8G8R8A8;
          else if(pfBitCount == 16)
             mFormat = GFXFormatR5G5B5A1;
          else if(pfBitCount == 8)
@@ -504,8 +504,10 @@ bool DDSFile::readHeader(Stream &s)
          break;
       case FOURCC_BC4:
          mFormat = GFXFormatBC4;
+         break;
       case FOURCC_BC5:
          mFormat = GFXFormatBC5;
+         break;
       default:
          Con::errorf("DDSFile::readHeader - unknown fourcc = '%c%c%c%c'", ((U8*)&pfFourCC)[0], ((U8*)&pfFourCC)[1], ((U8*)&pfFourCC)[2], ((U8*)&pfFourCC)[3]);
          break;

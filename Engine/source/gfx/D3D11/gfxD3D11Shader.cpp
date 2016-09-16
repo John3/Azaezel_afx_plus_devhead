@@ -204,40 +204,6 @@ bool GFXD3D11ConstBufferLayout::setMatrix(const ParamDesc& pd, const GFXShaderCo
 
       return false;
    }
-   else if (pd.constType == GFXSCT_Float4x3)
-   {
-      F32 buffer[4 * 4];
-      const U32 csize = 48;
-
-      // Loop through and copy 
-      bool ret = false;
-      U8* currDestPointer = basePointer + pd.offset;
-      const U8* currSourcePointer = static_cast<const U8*>(data);
-      const U8* endData = currSourcePointer + size;
-      while (currSourcePointer < endData)
-      {
-#ifdef TORQUE_DOUBLE_CHECK_43MATS
-         Point4F col;
-         ((MatrixF*)currSourcePointer)->getRow(3, &col);
-         AssertFatal(col.x == 0.0f && col.y == 0.0f && col.z == 0.0f && col.w == 1.0f, "3rd row used");
-#endif
-
-         if (dMemcmp(currDestPointer, currSourcePointer, csize) != 0)
-         {
-            dMemcpy(currDestPointer, currSourcePointer, csize);
-            ret = true;
-         }
-         else if (pd.constType == GFXSCT_Float4x3)
-         {
-            ret = true;
-         }
-
-         currDestPointer += csize;
-         currSourcePointer += sizeof(MatrixF);
-      }
-
-      return ret;
-   }
    else
    {
       PROFILE_SCOPE(GFXD3D11ConstBufferLayout_setMatrix_not4x4);
@@ -883,13 +849,15 @@ bool GFXD3D11Shader::_compileShader( const Torque::Path &filePath,
    ID3DBlob* errorBuff = NULL;
    ID3D11ShaderReflection* reflectionTable = NULL;
 
-#ifdef TORQUE_DEBUG
-	U32 flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_WARNINGS_ARE_ERRORS;
-#else
-   U32 flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3; //TODO double check load times with D3DCOMPILE_OPTIMIZATION_LEVEL3
-   //recommended flags for NSight, uncomment to use. NSight should be used in release mode only. *Still works with above flags however
-   //flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_PREFER_FLOW_CONTROL | D3DCOMPILE_SKIP_OPTIMIZATION;
+#ifdef TORQUE_GFX_VISUAL_DEBUG //for use with NSight, GPU Perf studio, VS graphics debugger
+	U32 flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_PREFER_FLOW_CONTROL | D3DCOMPILE_SKIP_OPTIMIZATION;
+#elif defined(TORQUE_DEBUG) //debug build
+   U32 flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_WARNINGS_ARE_ERRORS;
+#else //release build
+   U32 flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
+
+
 
 #ifdef D3D11_DEBUG_SPEW
    Con::printf( "Compiling Shader: '%s'", filePath.getFullPath().c_str() );
