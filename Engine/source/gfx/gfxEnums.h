@@ -183,7 +183,6 @@ enum GFXFormat
    GFXFormatR8G8B8A8,// first in group...
    GFXFormatR8G8B8X8,
    GFXFormatB8G8R8A8,
-   GFXFormatR8G8B8A8_SRGB,
    GFXFormatR32F,
    GFXFormatR16G16,
    GFXFormatR16G16F,

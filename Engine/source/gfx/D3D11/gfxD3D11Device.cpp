@@ -392,11 +392,6 @@ void GFXD3D11Device::enumerateVideoModes()
    SAFE_RELEASE(DXGIFactory);
 }
 
-IDXGISwapChain* GFXD3D11Device::getSwapChain()
-{
-   return mSwapChain;
-}
-
 void GFXD3D11Device::init(const GFXVideoMode &mode, PlatformWindow *window)
 {
    AssertFatal(window, "GFXD3D11Device::init - must specify a window!");
