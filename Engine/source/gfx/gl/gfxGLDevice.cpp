@@ -103,7 +103,6 @@ void STDCALL glAmdDebugCallback(GLuint id, GLenum category, GLenum severity, GLs
         Con::printf("AMDOPENGL: %s", message);
 }
 
-
 void GFXGLDevice::initGLState()
 {  
    // We don't currently need to sync device state with a known good place because we are

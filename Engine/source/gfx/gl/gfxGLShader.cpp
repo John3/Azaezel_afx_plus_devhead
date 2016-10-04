@@ -446,13 +446,6 @@ bool GFXGLShader::_init()
    if(!compiledVertexShader || !compiledPixelShader)
       return false;
    
-   //bind fragment out color
-   /*(mProgram, 0, "OUT_col");
-    glBindFragDataLocation(mProgram, 1, "OUT_col1");
-    glBindFragDataLocation(mProgram, 2, "OUT_col2");
-    glBindFragDataLocation(mProgram, 3, "OUT_col3");*/
-   
-   
    // Link it!
    glLinkProgram( mProgram );
    
@@ -526,17 +519,16 @@ bool GFXGLShader::_init()
          {
             Con::errorf( "GFXGLShader::init - Error linking shader!" );
             Con::errorf( "Program %s / %s: %s",
-                        mVertexFile.getFullPath().c_str(), mPixelFile.getFullPath().c_str(), log);
+               mVertexFile.getFullPath().c_str(), mPixelFile.getFullPath().c_str(), log);
          }
       }
       else if ( smLogWarnings )
       {
          Con::warnf( "Program %s / %s: %s",
-                    mVertexFile.getFullPath().c_str(), mPixelFile.getFullPath().c_str(), log);
+            mVertexFile.getFullPath().c_str(), mPixelFile.getFullPath().c_str(), log);
       }
    }
-   
-   
+
    // If we failed to link, bail.
    if ( linkStatus == GL_FALSE )
       return false;
