@@ -1443,7 +1443,6 @@ void TSSkinMesh::setupVertexTransforms()
       for( i = 0, j = 0; i < curTransform.transformCount; i += 4, j += 1 )
       {
          __TSMeshVertex_BoneData &v = mVertexData.getBone(curTransform.vertexIndex, j);
-         const BatchData::TransformOp &transformOp = curTransform.transform[i];
          S32 vertsSet = transformsLeft > 4 ? 4 : transformsLeft;
 
          __TSMeshIndex_List indices;
@@ -3180,9 +3179,6 @@ U32 TSMesh::getNumVerts()
 
 void TSMesh::_convertToVertexData(TSMeshVertexArray &outArray, const Vector<Point3F> &_verts, const Vector<Point3F> &_norms)
 {
-   U32 colorOffset = 0;
-   U32 boneOffset = 0;
-
    // Update tangents list
    createTangents(verts, norms);
 
@@ -3199,7 +3195,6 @@ void TSMesh::_convertToVertexData(TSMeshVertexArray &outArray, const Vector<Poin
    if (mNumVerts == 0)
       return;
 
-   bool needsSkin = mVertexFormat->hasBlendIndices();
    bool needWeightSet = outArray.getBoneOffset() != 0;
 
    bool hasColor = getHasColor();
@@ -3237,8 +3232,6 @@ void TSMesh::_convertToVertexData(TSMeshVertexArray &outArray, const Vector<Poin
 
 void TSMesh::makeEditable()
 {
-   bool hasTVert2 = getHasTVert2();
-   bool hasColor = getHasColor();
    bool hasVerts = verts.size() != 0;
 
    if(mVertexData.isReady() && !hasVerts)
@@ -3290,8 +3283,6 @@ void TSSkinMesh::addWeightsFromVertexBuffer()
 
 void TSSkinMesh::makeEditable()
 {
-   bool hasTVert2 = getHasTVert2();
-   bool hasColor = getHasColor();
    bool hasVerts = verts.size() != 0;
 
    // Reconstruct bone mapping
