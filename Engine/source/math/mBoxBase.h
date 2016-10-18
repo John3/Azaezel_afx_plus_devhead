@@ -205,8 +205,8 @@ class BoxBase
                break;
             default:
                AssertFatal( false, "BoxBase::getPlanePointIndex - Invalid plane" );
-			   return InvalidPoint;
          }
+        return InvalidPoint;
       }
 
       /// Indices for the edges of the box.
