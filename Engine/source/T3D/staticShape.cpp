@@ -112,7 +112,6 @@ StaticShapeData::StaticShapeData(const StaticShapeData& other, bool temp_clone) 
    noIndividualDamage = other.noIndividualDamage;
    dynamicTypeField = other.dynamicTypeField;
    isShielded = other.isShielded; // -- uninitialized, unused
-   energyPerDamagePoint = other.energyPerDamagePoint; // -- uninitialized, unused
 }
 // AFX CODE BLOCK (datablock-temp-clone) >>
 

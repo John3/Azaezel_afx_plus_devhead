@@ -440,7 +440,6 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
       // Read the layer texture to get the samples.
       meta->addStatement(new GenOp("   @ = round( @.Sample( @, @.xy ) * 255.0f );\r\n",
          new DecOp(layerSample), layerTexObj, layerTex, inTex));
-
    }
 
    Var *layerSize = (Var*)LangElement::find( "layerSize" );
@@ -760,7 +759,6 @@ void TerrainMacroMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentL
       layerTexObj->constNum = layerTex->constNum;
       meta->addStatement(new GenOp("   @ = round( @.Sample( @, @.xy ) * 255.0f );\r\n",
          new DecOp(layerSample), layerTexObj, layerTex, inTex));
-
    }
 
    Var *layerSize = (Var*)LangElement::find( "layerSize" );
@@ -1015,12 +1013,8 @@ void TerrainLightMapFeatHLSL::processPix( Vector<ShaderComponent*> &componentLis
 
    // Get the lightmap texture.
    Var *lightMap = new Var;
-   if (GFX->getAdapterType() == Direct3D11)
-      lightMap->setType("SamplerState");
-   else
-      lightMap->setType("sampler2D");
-
-   lightMap->setName("lightMapTex");
+   lightMap->setType( "sampler2D" );
+   lightMap->setName( "lightMapTex" );
    lightMap->uniform = true;
    lightMap->sampler = true;
    lightMap->constNum = Var::getTexUnitNum();

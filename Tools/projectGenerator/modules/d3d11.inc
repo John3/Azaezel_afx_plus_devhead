@@ -1,5 +1,6 @@
+<?php
 //-----------------------------------------------------------------------------
-// Copyright (c) 2012 GarageGames, LLC
+// Copyright (c) 2015 GarageGames, LLC
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -20,28 +21,14 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "../../ShaderModelAutoGen.hlsl"
-#include "../postFx.hlsl"
-
-TORQUE_UNIFORM_SAMPLER2D(backBuffer,0);
-uniform float radiusX;
-uniform float radiusY;
-
-float4 main(PFXVertToPix IN) : TORQUE_TARGET0
-{
-   float4 base = TORQUE_TEX2D(backBuffer, IN.uv0);   
+beginModule('d3d11');   
    
-	float4 sepia = base;
-   if (fmod(distance(IN.uv0.y,0.5)*1024,4) < 1)
-      sepia.rgb = float3(0,0,0);
-	
-   float dist = distance(IN.uv0, float2(0.5,0.5));
-   float4 shift = float4(1.0,1.0,1.0,1.0);
-   shift.rgb *= smoothstep(radiusX, radiusY, dist);
-   float4 result = base;
-   result.r = result.b;
-   result.g = result.b;
-   result = lerp( sepia, result, saturate((abs(shift.r)-0.1)));
-   base = lerp(result,base,shift);
-   return base;
-}
+   if ( T3D_Generator::$platform == "win32" && !isDefined("TORQUE_DEDICATED"))
+   {
+      addProjectDefine('TORQUE_D3D11');
+      addEngineSrcDir("gfx/D3D11");
+   }
+
+endModule();
+
+?>

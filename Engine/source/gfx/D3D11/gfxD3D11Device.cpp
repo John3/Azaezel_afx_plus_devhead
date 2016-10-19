@@ -466,8 +466,6 @@ void GFXD3D11Device::init(const GFXVideoMode &mode, PlatformWindow *window)
          mCbufferPartialSupported = true;
    }
 
-
-
    //set the fullscreen state here if we need to
    if(mode.fullScreen)
    {

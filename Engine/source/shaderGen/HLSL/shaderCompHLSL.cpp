@@ -164,7 +164,6 @@ Var * ShaderConnectorHLSL::getIndexedElement(U32 index, RegisterType type, U32 n
    {
       Var *newVar = new Var;
       mElementList.push_back(newVar);
-
       // This was needed for hardware instancing, but
       // i don't really remember why right now.
       if (index > mCurBlendIndicesElem)

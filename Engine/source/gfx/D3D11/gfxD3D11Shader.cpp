@@ -857,8 +857,6 @@ bool GFXD3D11Shader::_compileShader( const Torque::Path &filePath,
    U32 flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
 
-
-
 #ifdef D3D11_DEBUG_SPEW
    Con::printf( "Compiling Shader: '%s'", filePath.getFullPath().c_str() );
 #endif

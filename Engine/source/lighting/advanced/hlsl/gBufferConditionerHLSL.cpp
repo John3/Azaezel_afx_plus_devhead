@@ -253,7 +253,6 @@ Var* GBufferConditionerHLSL::printMethodHeader( MethodType methodType, const Str
       DecOp *bufferSampleDecl = new DecOp(bufferSample); 
 
       meta->addStatement(new GenOp("@(@, @, @)\r\n", methodDecl, deferredSamplerDecl, deferredTexDecl, screenUVDecl));
-
       meta->addStatement( new GenOp( "{\r\n" ) );
 
       meta->addStatement( new GenOp( "   // Sampler g-buffer\r\n" ) );
