@@ -160,11 +160,15 @@ static const char *sDamageStateName[] =
 //----------------------------------------------------------------------------
 
 ShapeBaseData::ShapeBaseData()
- : shadowEnable( false ),
+ : mUseCollisonLods(false),
+   mColSets(-1),
+   mColSetReport(1),
+   shadowEnable( false ),
    shadowSize( 128 ),
    shadowMaxVisibleDistance( 80.0f ),
    shadowProjectionDistance( 10.0f ),
    shadowSphereAdjust( 1.0f ),
+   mUseHitboxes(false),
    shapeName( StringTable->insert("") ),
    cubeDescId( 0 ),
    reflectorDesc( NULL ),
@@ -180,12 +184,9 @@ ShapeBaseData::ShapeBaseData()
    density( 1.0f ),
    maxEnergy( 0.0f ),
    maxDamage( 1.0f ),
-   destroyedLevel( 1.0f ),
-   disabledLevel( 1.0f ),
    repairRate( 0.0033f ),
-   eyeNode( -1 ),
-   earNode( -1 ),
-   cameraNode( -1 ),
+   disabledLevel( 1.0f ),
+   destroyedLevel( 1.0f ),
    cameraMaxDist( 0.0f ),
    cameraMinDist( 0.2f ),
    cameraDefaultFov( 75.0f ),
@@ -193,6 +194,14 @@ ShapeBaseData::ShapeBaseData()
    cameraMaxFov( 120.f ),
    cameraCanBank( false ),
    mountedImagesBank( false ),
+   mIconHandle(NULL),
+   mHideIcon(false),
+   mCRC( 0 ),
+   computeCRC( false ),
+   eyeNode( -1 ),
+   earNode( -1 ),
+   cameraNode( -1 ),
+   debrisDetail( -1 ),
    damageSequence( -1 ),
    hulkSequence( -1 ),
    observeThroughObject( false ),
@@ -200,15 +209,7 @@ ShapeBaseData::ShapeBaseData()
    useEyePoint( false ),
    isInvincible( false ),
    renderWhenDestroyed( true ),
-   computeCRC( false ),
-   inheritEnergyFromMount( false ),
-   mCRC(0),
-   mUseHitboxes(false),
-   mIconHandle(NULL),
-   mHideIcon(false),
-   mUseCollisonLods(false),
-   mColSets(-1),
-   mColSetReport(1)
+   inheritEnergyFromMount( false )
 {      
    dMemset( mountPointNode, -1, sizeof( S32 ) * SceneObject::NumMountPoints );
    mIcon = StringTable->insert("");
