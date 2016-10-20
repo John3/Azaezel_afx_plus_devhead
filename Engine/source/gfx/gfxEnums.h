@@ -286,7 +286,6 @@ enum GFXAdapterType
    Direct3D11,
    Direct3D9,
    NullDevice,
-   Direct3D9_360,
    GFXAdapterType_Count
 };
 

@@ -32,9 +32,6 @@
 
 GBitmap* ScreenShotD3D9::_captureBackBuffer()
 {
-#ifdef TORQUE_OS_XENON
-   return NULL;
-#else
    LPDIRECT3DDEVICE9 D3DDevice = dynamic_cast<GFXD3D9Device *>(GFX)->getDevice();
 
    IDirect3DSurface9 * backBuffer;
@@ -105,6 +102,5 @@ GBitmap* ScreenShotD3D9::_captureBackBuffer()
    backBuffer->Release();
 
    return gb;
-#endif
 }
 
