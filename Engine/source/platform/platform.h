@@ -84,25 +84,6 @@ enum ProcessorType
    CPU_Cyrix_GXm,          ///< Media GX w/ MMX
    CPU_Cyrix_Unknown,
 
-   // PowerPC
-   CPU_PowerPC_Unknown,
-   CPU_PowerPC_601,
-   CPU_PowerPC_603,
-   CPU_PowerPC_603e,
-   CPU_PowerPC_603ev,
-   CPU_PowerPC_604,
-   CPU_PowerPC_604e,
-   CPU_PowerPC_604ev,
-   CPU_PowerPC_G3,
-   CPU_PowerPC_G4,
-   CPU_PowerPC_G4_7450,
-   CPU_PowerPC_G4_7455,
-   CPU_PowerPC_G4_7447, 
-   CPU_PowerPC_G5,
-
-   // Xenon
-   CPU_Xenon,
-
 };
 
 /// Properties for CPU.

@@ -1612,7 +1612,6 @@ static void handleGameMasterInfoRequest( const NetAddress* address, U32 key, U8 
 #if defined(TORQUE_OS_LINUX) || defined(TORQUE_OS_OPENBSD)
       temp8 |= ServerInfo::Status_Linux;
 #endif
-
       if ( Con::getBoolVariable( "Server::Dedicated" ) )
          temp8 |= ServerInfo::Status_Dedicated;
       if ( dStrlen( Con::getVariable( "pref::Server::Password" ) ) > 0 )
@@ -1874,7 +1873,6 @@ static void handleGameInfoRequest( const NetAddress* address, U32 key, U8 flags 
 #if defined(TORQUE_OS_LINUX) || defined(TORQUE_OS_OPENBSD)
       status |= ServerInfo::Status_Linux;
 #endif
-
       if ( Con::getBoolVariable( "Server::Dedicated" ) )
          status |= ServerInfo::Status_Dedicated;
       if ( dStrlen( Con::getVariable( "pref::Server::Password" ) ) )

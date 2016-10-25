@@ -40,8 +40,6 @@
 #  include "lighting/advanced/glsl/advancedLightingFeaturesGLSL.h"
 #endif
 
-
-
 bool AdvancedLightingFeatures::smFeaturesRegistered = false;
 
 void AdvancedLightingFeatures::registerFeatures( const GFXFormat &deferredTargetFormat, const GFXFormat &lightInfoTargetFormat )

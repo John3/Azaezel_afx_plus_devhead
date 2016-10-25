@@ -39,7 +39,7 @@ struct ServerInfo
 {
    enum StatusFlags
    {
-      // Info flags (0-7):
+      // Info flags (0-3):
       Status_Dedicated  = BIT(0),
       Status_Passworded = BIT(1),
       Status_Linux      = BIT(2),
@@ -96,7 +96,6 @@ struct ServerInfo
    bool isDedicated()      { return( status.test( Status_Dedicated ) ); }
    bool isPassworded()     { return( status.test( Status_Passworded ) ); }
    bool isLinux()          { return( status.test( Status_Linux ) ); }
-
 };
 
 

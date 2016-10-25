@@ -26,7 +26,6 @@
 /// @file
 /// Compiler intrinsics for Visual C++.
 
-
 #include <intrin.h>
 
 // Fetch-And-Add

@@ -192,3 +192,6 @@
 #else
 #  define TORQUE_INSTANCE_EXCLUSION   "TorqueTest"
 #endif
+
+// Someday, it might make sense to do some pragma magic here so we error
+// on inconsistent flags.

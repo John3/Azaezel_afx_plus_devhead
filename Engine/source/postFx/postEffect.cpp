@@ -1192,7 +1192,6 @@ void PostEffect::process(  const SceneRenderState *state,
 
    if ( mTargetTex || mTargetDepthStencil )
    {
-
       const RectI &oldViewport = GFX->getViewport();
       GFXTarget *oldTarget = GFX->getActiveRenderTarget();
 

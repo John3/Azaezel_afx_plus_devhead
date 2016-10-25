@@ -57,7 +57,6 @@
 GFXPrimitiveType drawTypes[] = { GFXTriangleList, GFXTriangleStrip };
 #define getDrawType(a) (drawTypes[a])
 
-
 // structures used to share data between detail levels...
 // used (and valid) during load only
 Vector<Point3F*> TSMesh::smVertsList;
