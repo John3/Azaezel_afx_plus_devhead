@@ -1,4 +1,4 @@
-#debug -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Copyright (c) 2014 GarageGames, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,10 +21,6 @@
 # -----------------------------------------------------------------------------
 
 project(${TORQUE_APP_NAME})
-
-if(NOT TORQUE_CPU_X64)
-   message(WARNING "32 bit builds are deprecated on desktop builds")
-endif()
 
 if(UNIX)
     if(NOT CXX_FLAG32)
@@ -62,8 +58,8 @@ mark_as_advanced(TORQUE_ADVANCED_LIGHTING)
 option(TORQUE_BASIC_LIGHTING "Basic Lighting" ON)
 mark_as_advanced(TORQUE_BASIC_LIGHTING)
 if(WIN32)
-   option(TORQUE_SFX_DirectX "DirectX Sound" ON)
-   mark_as_advanced(TORQUE_SFX_DirectX)
+	option(TORQUE_SFX_DirectX "DirectX Sound" ON)
+	mark_as_advanced(TORQUE_SFX_DirectX)
 else()
    set(TORQUE_SFX_DirectX OFF)
 endif()
@@ -94,15 +90,14 @@ else()
 endif()
 
 if(WIN32)
-   option(TORQUE_OPENGL "Allow OpenGL render" OFF)
-   #mark_as_advanced(TORQUE_OPENGL)
+	option(TORQUE_OPENGL "Allow OpenGL render" OFF)
+	#mark_as_advanced(TORQUE_OPENGL)
 else()
-   set(TORQUE_OPENGL ON) # we need OpenGL to render on Linux/Mac
-   option(TORQUE_DEDICATED "Torque dedicated" OFF)
+	set(TORQUE_OPENGL ON) # we need OpenGL to render on Linux/Mac
 endif()
 
 if(WIN32)
-   option(TORQUE_D3D11 "Allow Direct3D 11 render" OFF)
+	option(TORQUE_D3D11 "Allow Direct3D 11 render" OFF)
 endif()
 
 option(TORQUE_EXPERIMENTAL_EC "Experimental Entity/Component systems" OFF)
@@ -165,13 +160,11 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4018")
     # warning C4244: 'initializing' : conversion from 'XXX' to 'XXX', possible loss of data
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4244")
-    if(TORQUE_SFX_DirectX)
-      set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY INCLUDE_DIRECTORIES $ENV{DXSDK_DIR}/Include)
-      if( TORQUE_CPU_X64 )
-           link_directories($ENV{DXSDK_DIR}/Lib/x64)
-       else()
-           link_directories($ENV{DXSDK_DIR}/Lib/x86)
-       endif()
+
+    if( TORQUE_CPU_X64 )
+        link_directories($ENV{DXSDK_DIR}/Lib/x64)
+    else()
+        link_directories($ENV{DXSDK_DIR}/Lib/x86)
     endif()
 endif()
 
@@ -438,9 +431,9 @@ if(TORQUE_SDL)
       set(BLACKLIST "nfd_gtk.c" "nfd_win.cpp" )
       addLib(nativeFileDialogs)
       set(BLACKLIST ""  )
-    else()
-       set(BLACKLIST "nfd_gtk.c" "nfd_cocoa.m" )
-       addLib(nativeFileDialogs)
+ 	else()
+ 	   set(BLACKLIST "nfd_gtk.c" "nfd_cocoa.m" )
+ 	   addLib(nativeFileDialogs)
      set(BLACKLIST ""  )
        addLib(comctl32)
   endif()
@@ -489,12 +482,14 @@ if(WIN32)
     addPath("${srcDir}/platformWin32/videoInfo")
     addPath("${srcDir}/platformWin32/minidump")
     addPath("${srcDir}/windowManager/win32")
-   if(TORQUE_D3D11)
-      addPath("${srcDir}/gfx/D3D11")
-   endif()
+	if(TORQUE_D3D11)
+		addPath("${srcDir}/gfx/D3D11")
+	endif()
     addPath("${srcDir}/gfx/D3D9")
     addPath("${srcDir}/gfx/D3D9/pc")
-    addPath("${srcDir}/shaderGen/HLSL")
+    addPath("${srcDir}/gfx/D3D11")
+    addDef( "TORQUE_D3D11" )
+    addPath("${srcDir}/shaderGen/HLSL") 
     addPath("${srcDir}/terrain/hlsl")
     addPath("${srcDir}/forest/hlsl")
     # add windows rc file for the icon
@@ -616,7 +611,7 @@ endif()
 
 if(WIN32)
     # copy pasted from T3D build system, some might not be needed
-    set(TORQUE_EXTERNAL_LIBS "COMCTL32.LIB;COMDLG32.LIB;USER32.LIB;ADVAPI32.LIB;GDI32.LIB;WINMM.LIB;WSOCK32.LIB;vfw32.lib;Imm32.lib;ole32.lib;shell32.lib;oleaut32.lib;version.lib" CACHE STRING "external libs to link against")
+    set(TORQUE_EXTERNAL_LIBS "COMCTL32.LIB;COMDLG32.LIB;USER32.LIB;ADVAPI32.LIB;GDI32.LIB;WINMM.LIB;WSOCK32.LIB;vfw32.lib;Imm32.lib;d3d9.lib;d3dx9.lib;DxErr.lib;ole32.lib;shell32.lib;oleaut32.lib;version.lib" CACHE STRING "external libs to link against")
     mark_as_advanced(TORQUE_EXTERNAL_LIBS)
     addLib("${TORQUE_EXTERNAL_LIBS}")
 

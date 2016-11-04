@@ -546,7 +546,7 @@ bool TerrainCellMaterial::_createPass( Vector<MaterialInfo*> *materials,
       // MFT_TerrainAdditive feature to lerp the
       // output normal with the previous pass.
       //
-      if ( prePassMat )
+      if ( deferredMat )
          desc.setColorWrites( true, true, true, false );
    }
 

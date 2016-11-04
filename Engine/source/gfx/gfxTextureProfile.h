@@ -105,7 +105,6 @@ public:
 
       /// Texture is managed by another process, thus should not be modified
       NoModify = BIT(12)
-
    };
 
    enum Compression

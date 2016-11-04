@@ -316,7 +316,7 @@ function HDRPostFX::onDisabled( %this )
    GammaPostFX.enable();
 
    // Restore the non-HDR offscreen surface format.
-   %format = getBestHDRFormat();
+   %format = %this.previousFormat;
    AL_FormatToken.format = %format;
    setReflectFormat( %format );
 

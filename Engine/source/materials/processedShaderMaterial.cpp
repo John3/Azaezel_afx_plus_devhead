@@ -76,6 +76,7 @@ void ShaderConstHandles::init( GFXShader *shader, CustomMaterial* mat /*=NULL*/ 
    mWorldToObjSC = shader->getShaderConstHandle(ShaderGenVars::worldToObj);
    mViewToObjSC = shader->getShaderConstHandle(ShaderGenVars::viewToObj);
    mCubeTransSC = shader->getShaderConstHandle(ShaderGenVars::cubeTrans);
+   mCubeMipsSC = shader->getShaderConstHandle(ShaderGenVars::cubeMips);
    mObjTransSC = shader->getShaderConstHandle(ShaderGenVars::objTrans);
    mCubeEyePosSC = shader->getShaderConstHandle(ShaderGenVars::cubeEyePos);
    mEyePosSC = shader->getShaderConstHandle(ShaderGenVars::eyePos);
@@ -1288,14 +1289,19 @@ void ProcessedShaderMaterial::setSceneInfo(SceneRenderState * state, const Scene
 
    // Set cubemap stuff here (it's convenient!)
    const Point3F &eyePosWorld = state->getCameraPosition();
-   if ( handles->mCubeEyePosSC->isValid() )
+   if(_hasCubemap(pass) || mMaterial->mDynamicCubemap)
    {
-      if(_hasCubemap(pass) || mMaterial->mDynamicCubemap)
+	  if ( handles->mCubeEyePosSC->isValid() )
       {
          Point3F cubeEyePos = eyePosWorld - sgData.objTrans->getPosition();
-         shaderConsts->set(handles->mCubeEyePosSC, cubeEyePos);      
+         shaderConsts->set(handles->mCubeEyePosSC, cubeEyePos);
       }
+
    }
+	   if (sgData.cubemap)
+		   shaderConsts->setSafe(handles->mCubeMipsSC, (F32)sgData.cubemap->getMipMapLevels());
+	   else
+		   shaderConsts->setSafe(handles->mCubeMipsSC, 1.0f);
 
    shaderConsts->setSafe(handles->mVisiblitySC, sgData.visibility);
 

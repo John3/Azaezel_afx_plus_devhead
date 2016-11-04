@@ -416,8 +416,8 @@ void GFXD3D11Device::init(const GFXVideoMode &mode, PlatformWindow *window)
                                  driverType,
                                  NULL,
                                  createDeviceFlags,
-                                 NULL,
-                                 0,
+											pFeatureLevels,
+                                 nFeatureCount,
                                  D3D11_SDK_VERSION,
                                  &d3dpp,
                                  &mSwapChain,
@@ -425,6 +425,7 @@ void GFXD3D11Device::init(const GFXVideoMode &mode, PlatformWindow *window)
                                  &deviceFeature,
                                  &mD3DDeviceContext);
 
+   
    if(FAILED(hres))
    {
       #ifdef TORQUE_DEBUG
@@ -480,7 +481,6 @@ void GFXD3D11Device::init(const GFXVideoMode &mode, PlatformWindow *window)
 
    // Now reacquire all the resources we trashed earlier
    reacquireDefaultPoolResources();
-   //TODO implement feature levels?
    if (deviceFeature >= D3D_FEATURE_LEVEL_11_0)
       mPixVersion = 5.0f;
    else

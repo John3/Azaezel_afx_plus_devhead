@@ -1077,7 +1077,7 @@ void TerrainAdditiveFeatGLSL::processPix( Vector<ShaderComponent*> &componentLis
    Var *color = NULL;
 
    Var *normal = NULL;
-   if (fd.features[MFT_DeferredTerrainDetailMap])
+   if (fd.features[MFT_isDeferred])
    {
        color = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::RenderTarget1) );
        normal = (Var*) LangElement::find( getOutputTargetVarName(ShaderFeature::DefaultTarget) );
