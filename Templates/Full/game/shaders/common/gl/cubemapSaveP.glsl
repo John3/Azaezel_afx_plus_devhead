@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2012 GarageGames, LLC
+// Copyright (c) 2016 GarageGames, LLC
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -20,34 +20,33 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "platform/platform.h"
-#include "console/console.h"
+#include "hlslCompat.glsl"
+#include "torque.glsl"
 
-#include "SDL.h"
-#include "windowManager/sdl/sdlWindow.h"
+uniform samplerCube cubemapTex;
 
-static SDL_Window* gSplashWindow = nullptr;
-static SDL_Surface* gSplashImage = nullptr;
-static SDL_Texture* gSplashTexture = nullptr;
-static SDL_Renderer* gSplashRenderer = nullptr;
+in float3 face_pos_x;
+in float3 face_neg_x;
+in float3 face_pos_y;
+in float3 face_neg_y;
+in float3 face_pos_z;
+in float3 face_neg_z;
 
-bool Platform::displaySplashWindow( String path )
+out float4 target0;
+out float4 target1;
+out float4 target2;
+out float4 target3;
+out float4 target4;
+out float4 target5;
+//-----------------------------------------------------------------------------
+// Main
+//-----------------------------------------------------------------------------
+void main()
 {
-   if(path.isEmpty())
-      return false;
-   // TODO: Fix splash screen on macOS.
-   // SDL_Renderer forces GL context to be 2.1 even when using SDL_RENDERER_SOFTWARE
-
-	return true;
-}
-
-bool Platform::closeSplashWindow()
-{
-#ifndef TORQUE_OS_MAC
-   SDL_DestroyTexture(gSplashTexture);
-   SDL_FreeSurface(gSplashImage);
-   SDL_DestroyRenderer(gSplashRenderer);
-   SDL_DestroyWindow(gSplashWindow);
-#endif
-   return true;
+   target0 = texture(cubemapTex, face_pos_x);
+   target1 = texture(cubemapTex, face_neg_x);
+   target2 = texture(cubemapTex, face_pos_y);
+   target3 = texture(cubemapTex, face_neg_y);
+   target4 = texture(cubemapTex, face_pos_z);
+   target5 = texture(cubemapTex, face_neg_z);
 }

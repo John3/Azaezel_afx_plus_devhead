@@ -30,10 +30,12 @@
 #include "gfx/gfxTextureManager.h"
 #include "gfx/gfxTransformSaver.h"
 #include "gfx/gfxDebugEvent.h"
+#include "gfx/gfxAPI.h"
 #include "scene/sceneManager.h"
 #include "console/engineAPI.h"
 #include "math/mathUtils.h"
 
+#include "gfx/bitmap/cubemapSaver.h"
 
 IMPLEMENT_CONOBJECT( CubemapData );
 
@@ -173,4 +175,19 @@ DefineEngineMethod( CubemapData, getFilename, const char*, (),,
    "defined.  This is used by the material editor." )
 {
    return object->getFilename();
+}
+
+DefineEngineMethod(CubemapData, save, void, (const char* filename, const GFXFormat format), ("", GFXFormatBC1),
+	"Returns the script filename of where the CubemapData object was "
+	"defined.  This is used by the material editor.")
+{
+	if (filename == "")
+      filename = object->getName();
+
+   //add dds extension if needed
+   String finalName = String(filename);
+   if(!finalName.endsWith(".dds") || !finalName.endsWith(".DDS"))
+      finalName += String(".dds");
+
+   CubemapSaver::save(object->mCubemap, finalName, format);
 }

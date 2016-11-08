@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2012 GarageGames, LLC
+// Copyright (c) 2016 GarageGames, LLC
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -20,34 +20,39 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "platform/platform.h"
-#include "console/console.h"
+#ifndef _IMAGE_UTILS_H_
+#define _IMAGE_UTILS_H_
 
-#include "SDL.h"
-#include "windowManager/sdl/sdlWindow.h"
-
-static SDL_Window* gSplashWindow = nullptr;
-static SDL_Surface* gSplashImage = nullptr;
-static SDL_Texture* gSplashTexture = nullptr;
-static SDL_Renderer* gSplashRenderer = nullptr;
-
-bool Platform::displaySplashWindow( String path )
-{
-   if(path.isEmpty())
-      return false;
-   // TODO: Fix splash screen on macOS.
-   // SDL_Renderer forces GL context to be 2.1 even when using SDL_RENDERER_SOFTWARE
-
-	return true;
-}
-
-bool Platform::closeSplashWindow()
-{
-#ifndef TORQUE_OS_MAC
-   SDL_DestroyTexture(gSplashTexture);
-   SDL_FreeSurface(gSplashImage);
-   SDL_DestroyRenderer(gSplashRenderer);
-   SDL_DestroyWindow(gSplashWindow);
+#ifndef _SWIZZLE_H_
+#include "core/util/swizzle.h"
 #endif
-   return true;
-}
+#ifndef _GFXENUMS_H_
+#include "gfx/gfxEnums.h"
+#endif
+
+struct DDSFile;
+
+namespace ImageUtil
+{
+   enum CompressQuality
+   {
+      LowQuality,
+      MediumQuality,
+      HighQuality
+   };
+
+   // compress raw pixel data, expects rgba format
+   bool rawCompress(const U8 *srcRGBA, U8 *dst, const S32 width, const S32 height, const GFXFormat compressFormat, const CompressQuality compressQuality = LowQuality);
+   // compress DDSFile
+   bool ddsCompress(DDSFile *srcDDS, const GFXFormat compressFormat, const CompressQuality compressQuality = LowQuality);
+   // decompress compressed pixel data, dest data should be rgba format
+   bool decompress(const U8 *src, U8 *dstRGBA, const S32 width, const S32 height, const GFXFormat srcFormat);
+   //swizzle dds file
+   void swizzleDDS(DDSFile *srcDDS, const Swizzle<U8, 4> &swizzle);
+   //check if a GFXFormat is compressed
+   bool isCompressedFormat(const GFXFormat format);
+   //check if a GFXFormat has an alpha channel
+   bool isAlphaFormat(const GFXFormat format);
+};
+
+#endif

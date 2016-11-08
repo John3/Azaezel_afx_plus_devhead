@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2012 GarageGames, LLC
+// Copyright (c) 2016 GarageGames, LLC
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -20,15 +20,37 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _DDS_UTILS_H_
-#define _DDS_UTILS_H_
+#include "shaderModel.hlsl"
 
-struct DDSFile;
-
-namespace DDSUtil
+struct Conn
 {
-   bool squishDDS( DDSFile *srcDDS, const GFXFormat dxtFormat );
-   void swizzleDDS( DDSFile *srcDDS, const Swizzle<U8, 4> &swizzle );
+   float4 hpos : TORQUE_POSITION;
+   float3 face_pos_x : TEXCOORD0;
+   float3 face_neg_x : TEXCOORD1;
+   float3 face_pos_y : TEXCOORD2;
+   float3 face_neg_y : TEXCOORD3;
+   float3 face_pos_z : TEXCOORD4;
+   float3 face_neg_z : TEXCOORD5;
 };
 
-#endif
+uniform float4x4 matrix0;
+uniform float4x4 matrix1;
+uniform float4x4 matrix2;
+uniform float4x4 matrix3;
+uniform float4x4 matrix4;
+uniform float4x4 matrix5;
+
+Conn main(uint id: SV_VertexID)
+{
+   Conn Out;
+   float4 vertex = float4(float2((id << 1) & 2, id & 2) * float2(2, -2) + float2(-1, 1), 0, 1);
+   Out.hpos = vertex;
+   Out.face_pos_x = mul(matrix0, vertex).xyz;
+   Out.face_neg_x = mul(matrix1, vertex).xyz;
+   Out.face_pos_y = mul(matrix2, vertex).xyz;
+   Out.face_neg_y = mul(matrix3, vertex).xyz;
+   Out.face_pos_z = mul(matrix4, vertex).xyz;
+   Out.face_neg_z = mul(matrix5, vertex).xyz;
+
+   return Out;
+}

@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2012 GarageGames, LLC
+// Copyright (c) 2016 GarageGames, LLC
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -20,34 +20,20 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "platform/platform.h"
-#include "console/console.h"
+#ifndef _CUBEMAP_SAVER_H_
+#define _CUBEMAP_SAVER_H_
 
-#include "SDL.h"
-#include "windowManager/sdl/sdlWindow.h"
-
-static SDL_Window* gSplashWindow = nullptr;
-static SDL_Surface* gSplashImage = nullptr;
-static SDL_Texture* gSplashTexture = nullptr;
-static SDL_Renderer* gSplashRenderer = nullptr;
-
-bool Platform::displaySplashWindow( String path )
-{
-   if(path.isEmpty())
-      return false;
-   // TODO: Fix splash screen on macOS.
-   // SDL_Renderer forces GL context to be 2.1 even when using SDL_RENDERER_SOFTWARE
-
-	return true;
-}
-
-bool Platform::closeSplashWindow()
-{
-#ifndef TORQUE_OS_MAC
-   SDL_DestroyTexture(gSplashTexture);
-   SDL_FreeSurface(gSplashImage);
-   SDL_DestroyRenderer(gSplashRenderer);
-   SDL_DestroyWindow(gSplashWindow);
+#ifndef _GFXCUBEMAP_H_
+#include "gfx/gfxCubemap.h"
 #endif
-   return true;
-}
+#ifndef __RESOURCE_H__
+#include "core/resource.h"
+#endif
+
+namespace CubemapSaver
+{
+   // save cubemap handle to a dds cubemap with optional compression
+   bool save(GFXCubemapHandle cubemap, const Torque::Path &path, GFXFormat compressionFormat = GFXFormat_FIRST);
+};
+
+#endif

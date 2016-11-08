@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2012 GarageGames, LLC
+// Copyright (c) 2016 GarageGames, LLC
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -20,34 +20,32 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "platform/platform.h"
-#include "console/console.h"
+#include "hlslCompat.glsl"
+#include "torque.glsl"
 
-#include "SDL.h"
-#include "windowManager/sdl/sdlWindow.h"
+uniform float4x4 matrix0;
+uniform float4x4 matrix1;
+uniform float4x4 matrix2;
+uniform float4x4 matrix3;
+uniform float4x4 matrix4;
+uniform float4x4 matrix5;
 
-static SDL_Window* gSplashWindow = nullptr;
-static SDL_Surface* gSplashImage = nullptr;
-static SDL_Texture* gSplashTexture = nullptr;
-static SDL_Renderer* gSplashRenderer = nullptr;
+out float3 face_pos_x;
+out float3 face_neg_x;
+out float3 face_pos_y;
+out float3 face_neg_y;
+out float3 face_pos_z;
+out float3 face_neg_z;
 
-bool Platform::displaySplashWindow( String path )
+void main()
 {
-   if(path.isEmpty())
-      return false;
-   // TODO: Fix splash screen on macOS.
-   // SDL_Renderer forces GL context to be 2.1 even when using SDL_RENDERER_SOFTWARE
-
-	return true;
-}
-
-bool Platform::closeSplashWindow()
-{
-#ifndef TORQUE_OS_MAC
-   SDL_DestroyTexture(gSplashTexture);
-   SDL_FreeSurface(gSplashImage);
-   SDL_DestroyRenderer(gSplashRenderer);
-   SDL_DestroyWindow(gSplashWindow);
-#endif
-   return true;
+   float4 vertex = float4(float2((gl_VertexID << 1) & 2, gl_VertexID & 2) * float2(2, -2) + float2(-1, 1), 0, 1);
+   gl_Position = vertex;
+   correctSSP(gl_Position);
+   face_pos_x = tMul(matrix0, vertex).xyz;
+   face_neg_x = tMul(matrix1, vertex).xyz;
+   face_pos_y = tMul(matrix2, vertex).xyz;
+   face_neg_y = tMul(matrix3, vertex).xyz;
+   face_pos_z = tMul(matrix4, vertex).xyz;
+   face_neg_z = tMul(matrix5, vertex).xyz;
 }

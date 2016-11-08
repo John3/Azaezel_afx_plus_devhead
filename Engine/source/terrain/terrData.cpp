@@ -197,7 +197,7 @@ TerrainBlock::TerrainBlock()
    mDetailsDirty( false ),
    mLayerTexDirty( false ),
    mBaseTexSize( 1024 ),
-   mBaseTexFormat( TerrainBlock::JPG ),
+   mBaseTexFormat( TerrainBlock::DDS ),
    mCell( NULL ),
    mBaseMaterial( NULL ),
    mDefaultMatInst( NULL ),
