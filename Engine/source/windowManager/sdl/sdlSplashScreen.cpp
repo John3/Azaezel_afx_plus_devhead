@@ -35,9 +35,23 @@ bool Platform::displaySplashWindow( String path )
 {
    if(path.isEmpty())
       return false;
-   // TODO: Fix splash screen on macOS.
-   // SDL_Renderer forces GL context to be 2.1 even when using SDL_RENDERER_SOFTWARE
 
+   gSplashImage = SDL_LoadBMP(path);
+
+   //now the pop-up window
+   if (gSplashImage)
+   {
+      gSplashWindow = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+         gSplashImage->w, gSplashImage->h, SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN);
+
+      gSplashRenderer = SDL_CreateRenderer(gSplashWindow, -1, SDL_RENDERER_ACCELERATED);
+
+      gSplashTexture = SDL_CreateTextureFromSurface(gSplashRenderer, gSplashImage);
+
+      SDL_RenderCopy(gSplashRenderer, gSplashTexture, NULL, NULL);
+
+      SDL_RenderPresent(gSplashRenderer);
+   }
 	return true;
 }
 
