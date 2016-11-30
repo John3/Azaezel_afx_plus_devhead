@@ -266,6 +266,6 @@ void compute4Lights( float3 wsView,
    for ( i = 0; i < 3; i++ )
       toLight += lightVectors[i].rgb;
 
-   outDiffuse = float4(albedo.rgb*(1.0-metalness),albedo.a);
-   outSpecular = EvalBDRF( float3( 1.0, 1.0, 1.0 ), lightColor.rgb, toLight, wsPosition, wsNormal, smoothness, metalness );
+   outDiffuse = albedo;//float4(albedo.rgb*(1.0-metalness),albedo.a);
+   outSpecular = EvalBDRF( albedo.rgb, lightColor.rgb, toLight, wsPosition, wsNormal, smoothness, metalness );
 }
