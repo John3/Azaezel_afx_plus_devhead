@@ -1000,9 +1000,26 @@ function ObjectBuilderGui::buildPhysicsEntity(%this)
    %this.process();
 }
 
+function ObjectBuilderGui::buildPathShape(%this)
+{
+   %this.objectClassName = "PathShape";
+   %this.addField("dataBlock", "TypeDataBlock", "Data block", "PathShapeData");
+   %this.addField("Path", "TypePathRef", "Path", "");
+   %this.process();
+}
+
 //------------------------------------------------------------------------------
 // Functions to allow scripted/datablock objects to be instantiated
 //------------------------------------------------------------------------------
+
+function PathShapeData::create(%data)
+{
+   %obj = new PathShape() {
+      dataBlock = %data;
+      parentGroup = EWCreatorWindow.objectGroup;
+   };
+   return %obj;
+}
 
 function PhysicsEntityData::create(%data)
 {
@@ -1035,6 +1052,22 @@ function MissionMarkerData::create(%block)
       case "SpawnSphereMarker":
          %obj = new SpawnSphere() {
             datablock = %block;
+            parentGroup = EWCreatorWindow.objectGroup;
+         };
+         return(%obj);
+   }
+
+   return(-1);
+}
+
+function TriggerData::create(%block)
+{
+   switch$(%block)
+   {
+      case "NavTrigger":
+         %obj = new AITrigger() {
+            dataBlock = %block;
+            polyhedron = "-0.5000000 0.5000000 0.0000000 1.0000000 0.0000000 0.0000000 0.0000000 -1.0000000 0.0000000 0.0000000 0.0000000 1.0000000";
             parentGroup = EWCreatorWindow.objectGroup;
          };
          return(%obj);

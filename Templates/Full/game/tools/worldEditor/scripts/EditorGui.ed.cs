@@ -1675,7 +1675,7 @@ function EditorTree::onRightMouseUp( %this, %itemId, %mouse, %obj )
 
             object = -1;
          };
-         
+     
       if(%obj.isMemberOfClass("Entity"))
       {
          %popup = ETEntityContextPopup;      
@@ -1705,6 +1705,8 @@ function EditorTree::onRightMouseUp( %this, %itemId, %mouse, %obj )
                item[ 10 ] = "Convert to Portal" TAB "" TAB "EWorldEditor.convertSelectionToPolyhedralObjects( \"Portal\" );";
                item[ 11 ] = "Convert to Occluder" TAB "" TAB "EWorldEditor.convertSelectionToPolyhedralObjects( \"OcclusionVolume\" );";
                item[ 12 ] = "Convert to Sound Space" TAB "" TAB "EWorldEditor.convertSelectionToPolyhedralObjects( \"SFXSpace\" );";
+               item[ 13 ] = "Convert to Accumulation Volume" TAB "" TAB "EWorldEditor.convertSelectionToPolyhedralObjects( \"AccumulationVolume\" );";
+               item[ 14 ] = "Convert to Environment Volume" TAB "" TAB "EWorldEditor.convertSelectionToPolyhedralObjects( \"EnvVolume\" );";
             };
       }
       
@@ -1712,7 +1714,9 @@ function EditorTree::onRightMouseUp( %this, %itemId, %mouse, %obj )
       else if( %obj.isMemberOfClass( "Zone" ) ||
                %obj.isMemberOfClass( "Portal" ) ||
                %obj.isMemberOfClass( "OcclusionVolume" ) ||
-               %obj.isMemberOfClass( "SFXSpace" ) )
+               %obj.isMemberOfClass( "SFXSpace" ) ||
+               %obj.isMemberOfClass( "AccumulationVolume" ) ||
+               %obj.isMemberOfClass( "EnvVolume" ) )
       {
          %popup = ETPolyObjectContextPopup;      
          if( !isObject( %popup ) )
@@ -2147,7 +2151,7 @@ function EWorldEditor::toggleLockChildren( %this, %simGroup )
       else
       {
          %child.setLocked( !%child.locked );
-      }
+   }
    }
    
    EWorldEditor.syncGui();

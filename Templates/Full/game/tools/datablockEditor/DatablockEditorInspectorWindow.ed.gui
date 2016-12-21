@@ -165,6 +165,33 @@
          canSaveDynamicFields = "0";
          active = "0";
       };
+
+      /* Editor customizations currently disabled
+      // AFX CODE BLOCK <<
+      new GuiCheckBoxCtrl() {
+         text = " $$";
+         groupNum = "-1";
+         buttonType = "ToggleButton";
+         useMouseEvents = "0";
+         isContainer = "0";
+         Profile = "GuiCheckBoxProfile";
+         HorizSizing = "left";
+         VertSizing = "bottom";
+         position = "132 23";
+         Extent = "34 17";
+         MinExtent = "8 2";
+         canSave = "1";
+         Visible = "1";
+         Command = "DatablockEditorPlugin.toggleSubstitutionStatements();";
+         tooltipprofile = "GuiToolTipProfile";
+         ToolTip = "Toggle Substitution Statements";
+         hovertime = "1000";
+         canSaveDynamicFields = "0";
+         internalName = "DatablockSubstitutionsCheckBox";
+         //Variable = "pref::AFX::enableFXLoadFiltering";
+      };
+      // AFX CODE BLOCK >>
+      */
       new GuiBitmapButtonCtrl() {
          bitmap = "tools/gui/images/save-icon";
          groupNum = "-1";

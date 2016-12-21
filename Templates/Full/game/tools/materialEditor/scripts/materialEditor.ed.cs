@@ -91,7 +91,7 @@ function MaterialEditorGui::open(%this)
    MaterialEditorPropertiesWindow-->footstepSoundPopup.clear();
    MaterialEditorPropertiesWindow-->impactSoundPopup.clear();
 
-   %sounds = "<None>" TAB "<Soft>" TAB "<Hard>" TAB "<Metal>" TAB "<Snow>";    // Default sounds
+   %sounds = "<None>" TAB "<Carpet>" TAB "<Stone>" TAB "<Wood>" TAB "<Metal>" TAB "<Foliage>";    // Default sounds
 
    // Get custom sound datablocks
    foreach (%db in DataBlockSet)
@@ -772,6 +772,7 @@ function MaterialEditorGui::guiSync( %this, %material )
    MaterialEditorPropertiesWindow-->alphaRefTextEdit.setText((%material).alphaRef);
    MaterialEditorPropertiesWindow-->alphaRefSlider.setValue((%material).alphaRef);
    MaterialEditorPropertiesWindow-->doubleSidedCheckBox.setValue((%material).doubleSided);
+   MaterialEditorPropertiesWindow-->forcePBRCheckBox.setValue((%material).forcePBR);
    MaterialEditorPropertiesWindow-->transZWriteCheckBox.setValue((%material).translucentZWrite);
    MaterialEditorPropertiesWindow-->alphaTestCheckBox.setValue((%material).alphaTest);
    MaterialEditorPropertiesWindow-->castShadows.setValue((%material).castShadows);
@@ -1011,6 +1012,9 @@ function MaterialEditorGui::guiSync( %this, %material )
    MaterialEditorPropertiesWindow-->vertLitCheckbox.setValue((%material).vertLit[%layer]);
    MaterialEditorPropertiesWindow-->vertColorSwatch.color = (%material).vertColor[%layer];
    MaterialEditorPropertiesWindow-->subSurfaceCheckbox.setValue((%material).subSurface[%layer]);
+   MaterialEditorPropertiesWindow-->subSurfaceColorSwatch.color = (%material).subSurfaceColor[%layer];
+   MaterialEditorPropertiesWindow-->subSurfaceRolloffTextEdit.setText((%material).subSurfaceRolloff[%layer]);
+   MaterialEditorPropertiesWindow-->minnaertTextEdit.setText((%material).minnaertConstant[%layer]);
 
    // Animation properties
    MaterialEditorPropertiesWindow-->RotationAnimation.setValue(0);
@@ -1608,10 +1612,11 @@ function MaterialEditorGui::updateBehaviorSound(%this, %type, %sound)
 
    switch$ (%sound)
    {
-      case "<Soft>":    %defaultId = 0;
-      case "<Hard>":    %defaultId = 1;
-      case "<Metal>":   %defaultId = 2;
-      case "<Snow>":    %defaultId = 3;
+      case "<Carpet>":  %defaultId = 0;
+      case "<Stone>":   %defaultId = 1;
+      case "<Wood>":    %defaultId = 2;
+      case "<Metal>":   %defaultId = 3;
+      case "<Foliage>": %defaultId = 4;
       default:          %customName = %sound;
    }
 
@@ -1625,10 +1630,11 @@ function MaterialEditorGui::updateSoundPopup(%this, %type, %defaultId, %customNa
 
    switch (%defaultId)
    {
-      case 0:        %name = "<Soft>";
-      case 1:        %name = "<Hard>";
-      case 2:        %name = "<Metal>";
-      case 3:        %name = "<Snow>";
+      case 0:        %name = "<Carpet>";
+      case 1:        %name = "<Stone>";
+      case 2:        %name = "<Wood>";
+      case 3:        %name = "<Metal>";
+      case 4:        %name = "<Foliage>";
       default:
          if (%customName $= "")
             %name = "<None>";

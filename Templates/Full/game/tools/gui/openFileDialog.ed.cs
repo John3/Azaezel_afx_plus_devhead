@@ -21,7 +21,7 @@
 //-----------------------------------------------------------------------------
 
 function getLoadFilename(%filespec, %callback, %currentFile, %getRelative, %defaultPath)
-{
+{   
    //If no default path passed in then try to get one from the file
    if(%defaultPath $= "")
    {

@@ -565,7 +565,7 @@
                      isDecoy = "0";
                      Visible = "1";
                      tooltipprofile = "ToolsGuiToolTipProfile";
-                     hovertime = "1000";
+                     hovertime = "1000";					 						
 					 
                      new GuiContainer(){ // spec Map options
                         profile="ToolsGuiDefaultProfile";
@@ -4652,6 +4652,29 @@
                            ToolTip = "Determines if this material will be rendered from both sides of the polygon, or just the \'front facing\' side. ";
                            hovertime = "1000";
                            text = "Double Sided";
+                           groupNum = "-1";
+                           buttonType = "ToggleButton";
+                           useMouseEvents = "0";
+                           useInactiveState = "0";
+                        };
+                        new GuiCheckBoxCtrl() {
+                           canSaveDynamicFields = "0";
+                           internalName = "forcePBRCheckBox";
+                           Enabled = "1";
+                           isContainer = "0";
+                           Profile = "ToolsGuiCheckBoxProfile";
+                           HorizSizing = "right";
+                           VertSizing = "bottom";
+                           position = "105 70";
+                           Extent = "112 16";
+                           MinExtent = "8 2";
+                           canSave = "1";
+                           Visible = "1";
+                           Command = "MaterialEditorGui.updateActiveMaterial(\"forcePBR\", $ThisControl.getValue());";
+                           tooltipprofile = "ToolsGuiDefaultProfile";
+                           ToolTip = "forcePBR.";
+                           hovertime = "1000";
+                           text = "forcePBR";
                            groupNum = "-1";
                            buttonType = "ToggleButton";
                            useMouseEvents = "0";

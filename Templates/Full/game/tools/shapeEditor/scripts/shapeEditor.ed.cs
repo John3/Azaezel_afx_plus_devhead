@@ -2206,11 +2206,11 @@ function ShapeEdTriggerList::updateItem( %this, %oldFrame, %oldState, %frame, %s
 
 function ShapeEdSequences::onAddTrigger( %this )
 {
-    // Can only add triggers if a sequence is selected
-    %seqName = ShapeEdSequenceList.getSelectedName();
-    if ( %seqName !$= "" )
-    {
-        // Add a new trigger at the current frame
+   // Can only add triggers if a sequence is selected
+   %seqName = ShapeEdSequenceList.getSelectedName();
+   if ( %seqName !$= "" )
+   {
+      // Add a new trigger at the current frame
         %frame = mRound( ShapeEdSeqSlider.getValue() ) - %this-->startFrame.getText();
         if ((%frame < 0) || (%frame > %this-->endFrame.getText() - %this-->startFrame.getText()))
         {
@@ -2218,10 +2218,10 @@ function ShapeEdSequences::onAddTrigger( %this )
         }
         else
         {
-        %state = ShapeEdTriggerList.rowCount() % 30;
-        ShapeEditor.doAddTrigger( %seqName, %frame, %state );
-        }
-    }
+      %state = ShapeEdTriggerList.rowCount() % 30;
+      ShapeEditor.doAddTrigger( %seqName, %frame, %state );
+   }
+}
 }
 
 function ShapeEdTriggerList::onDeleteSelection( %this )
@@ -3029,7 +3029,7 @@ function ShapeEditor::addLODFromFile( %this, %dest, %filename, %size, %allowUnma
    %source = ShapeEditor.findConstructor( %filename );
    if ( %source == -1 )
       %source = ShapeEditor.createConstructor( %filename );
-   %source.lodType = "SingleSize";
+   %source.lodType = "TrailingNumber";
    %source.singleDetailSize = %size;
 
    // Create a temporary TSStatic to ensure the resource is loaded

@@ -883,3 +883,13 @@ function DatablockEditorTreeTabBook::onTabSelected(%this, %text, %id)
          DatablockEditorTreeWindow-->CreateSelection.visible = true;               
    }
 }
+
+// AFX CODE BLOCK <<
+function DatablockEditorPlugin::toggleSubstitutionStatements(%this)
+{
+  %subs_on = DatablockEditorInspectorWindow-->DatablockSubstitutionsCheckBox.getValue();
+  error("Toggle Substitution Statements -- " @ %subs_on);
+  DatablockEditorInspector.setSubstitutionsDisplay(%subs_on);
+  DatablockEditorInspector.refresh();
+}
+// AFX CODE BLOCK >>

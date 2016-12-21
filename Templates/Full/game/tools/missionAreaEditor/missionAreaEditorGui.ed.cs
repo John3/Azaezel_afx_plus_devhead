@@ -27,11 +27,11 @@ function MissionAreaEditorGui::onEditorActivated( %this )
    %ma = getMissionAreaServerObject();
    if( isObject( %ma ) )
    {
-      EWorldEditor.selectObject( %ma );
-      EWorldEditor.syncGui();
-      MissionAreaEditorTerrainEditor.updateTerrain();
-      %this.setSelectedMissionArea( %ma );
-      %this.onMissionAreaSelected( %this.getSelectedMissionArea() );   
+   EWorldEditor.selectObject( %ma );
+   EWorldEditor.syncGui();
+   MissionAreaEditorTerrainEditor.updateTerrain();
+   %this.setSelectedMissionArea( %ma );
+   %this.onMissionAreaSelected( %this.getSelectedMissionArea() );   
    }
 }
 

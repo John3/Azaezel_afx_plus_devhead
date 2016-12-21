@@ -111,6 +111,13 @@ function PE_ParticleEditor::guiSync( %this )
    PE_ColorTintSwatch2.color = %data.colors[ 2 ];
    PE_ColorTintSwatch3.color = %data.colors[ 3 ];
    
+   // AFX CODE BLOCK (enhanced-particle) <<
+   PE_ColorTintSwatch4.color = %data.colors[ 4 ];
+   PE_ColorTintSwatch5.color = %data.colors[ 5 ];
+   PE_ColorTintSwatch6.color = %data.colors[ 6 ];
+   PE_ColorTintSwatch7.color = %data.colors[ 7 ];
+   // AFX CODE BLOCK (enhanced-particle) >>
+   
    PE_ParticleEditor-->PEP_pointSize_slider0.setValue( %data.sizes[ 0 ] );
    PE_ParticleEditor-->PEP_pointSize_textEdit0.setText( %data.sizes[ 0 ] );
    
@@ -123,6 +130,20 @@ function PE_ParticleEditor::guiSync( %this )
    PE_ParticleEditor-->PEP_pointSize_slider3.setValue( %data.sizes[ 3 ] );
    PE_ParticleEditor-->PEP_pointSize_textEdit3.setText( %data.sizes[ 3 ] );
    
+   // AFX CODE BLOCK (enhanced-particle) <<
+   PE_ParticleEditor-->PEP_pointSize_slider4.setValue( %data.sizes[ 4 ] );
+   PE_ParticleEditor-->PEP_pointSize_textEdit4.setText( %data.sizes[ 4 ] );
+   
+   PE_ParticleEditor-->PEP_pointSize_slider5.setValue( %data.sizes[ 5 ] );
+   PE_ParticleEditor-->PEP_pointSize_textEdit5.setText( %data.sizes[ 5 ] );
+   
+   PE_ParticleEditor-->PEP_pointSize_slider6.setValue( %data.sizes[ 6 ] );
+   PE_ParticleEditor-->PEP_pointSize_textEdit6.setText( %data.sizes[ 6 ] );
+   
+   PE_ParticleEditor-->PEP_pointSize_slider7.setValue( %data.sizes[ 7 ] );
+   PE_ParticleEditor-->PEP_pointSize_textEdit7.setText( %data.sizes[ 7 ] );
+   // AFX CODE BLOCK (enhanced-particle) >>   
+   
    PE_ParticleEditor-->PEP_pointTime_slider0.setValue( %data.times[ 0 ] );
    PE_ParticleEditor-->PEP_pointTime_textEdit0.setText( %data.times[ 0 ] );
    
@@ -134,7 +155,20 @@ function PE_ParticleEditor::guiSync( %this )
    
    PE_ParticleEditor-->PEP_pointTime_slider3.setValue( %data.times[ 3 ] );
    PE_ParticleEditor-->PEP_pointTime_textEdit3.setText( %data.times[ 3 ] );
+   // AFX CODE BLOCK (enhanced-particle) <<
+   PE_ParticleEditor-->PEP_pointTime_slider4.setValue( %data.times[ 4 ] );
+   PE_ParticleEditor-->PEP_pointTime_textEdit4.setText( %data.times[ 4 ] );
    
+   PE_ParticleEditor-->PEP_pointTime_slider5.setValue( %data.times[ 5 ] );
+   PE_ParticleEditor-->PEP_pointTime_textEdit5.setText( %data.times[ 5 ] );
+   
+   PE_ParticleEditor-->PEP_pointTime_slider6.setValue( %data.times[ 6 ] );
+   PE_ParticleEditor-->PEP_pointTime_textEdit6.setText( %data.times[ 6 ] );
+   
+   PE_ParticleEditor-->PEP_pointTime_slider7.setValue( %data.times[ 7 ] );
+   PE_ParticleEditor-->PEP_pointTime_textEdit7.setText( %data.times[ 7 ] );   
+   // AFX CODE BLOCK (enhanced-particle) >>
+
    //particle animation
    PE_ParticleEditor-->PEP_animateTexture.setValue( %data.animateTexture );
    
