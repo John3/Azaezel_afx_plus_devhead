@@ -143,6 +143,11 @@ protected:
 
    F32 mPixVersion;
 
+   D3D_FEATURE_LEVEL mFeatureLevel;
+   // Shader Model targers
+   String mVertexShaderTarget;
+   String mPixelShaderTarget;
+
    bool mDebugLayers;
 
    DXGI_SAMPLE_DESC mMultisampleDesc;
@@ -309,9 +314,15 @@ public:
    // Default multisample parameters
    DXGI_SAMPLE_DESC getMultisampleType() const { return mMultisampleDesc; }
 
+   // Get feature level this gfx device supports
+   D3D_FEATURE_LEVEL getFeatureLevel() const { mFeatureLevel; }
+   // Shader Model targers
+   const String &getVertexShaderTarget() const { return mVertexShaderTarget; }
+   const String &getPixelShaderTarget() const { return mPixelShaderTarget; }
+
    // grab the sampler map
    const SamplerMap &getSamplersMap() const { return mSamplersMap; }
-   SamplerMap &getSamplersMap(){ return mSamplersMap; }
+   SamplerMap &getSamplersMap() { return mSamplersMap; }
 };
 
 #endif

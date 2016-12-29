@@ -99,7 +99,6 @@ protected:
          mRequest.complete = true;
       }
    }
-
 private:
    NameLookupRequest&   mRequest;
 };
