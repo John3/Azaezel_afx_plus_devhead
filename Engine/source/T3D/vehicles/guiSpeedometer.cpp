@@ -116,14 +116,14 @@ GuiSpeedometerHud::GuiSpeedometerHud()
    mSpeed = 0;
    mMaxSpeed = 100;
    mMaxAngle = 0;
-   mMinAngle = 200;
+   mMinAngle = 90;
    mCenter.set(0,0);
    mNeedleWidth = 3;
    mNeedleLength = 10;
    mTailLength = 5;
    mColor.set(1,0,0,1);
 
-   mNeedleBitmap = StringTable->insert("");
+   mNeedleBitmap = StringTable->insert("art/gui/playgui/needle.png");
    mNeedleTextureHandle = NULL;
 
    mExplicitSpeed = -1;

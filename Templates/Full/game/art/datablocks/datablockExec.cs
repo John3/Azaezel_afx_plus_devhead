@@ -65,3 +65,5 @@ exec("./vehicles/cheetahCar.cs");
 
 //interactables
 exec("./interactables/controlable_bridge.cs");
+// Physics objects
+exec("./physics.cs");

@@ -471,11 +471,10 @@ template<class T> T ReservedSocketList<T>::resolve(NetSocket socketToResolve)
    EntryType &entry = mSocketList[socketToResolve.getHandle()];
    return entry.used ? entry.value : -1;
 }
-
-static ConnectionNotifyEvent*   smConnectionNotify = NULL;
-static ConnectionAcceptedEvent* smConnectionAccept = NULL;
-static ConnectionReceiveEvent*  smConnectionReceive = NULL;
-static PacketReceiveEvent*      smPacketReceive = NULL;
+ConnectionNotifyEvent*   Net::smConnectionNotify = NULL;
+ConnectionAcceptedEvent* Net::smConnectionAccept = NULL;
+ConnectionReceiveEvent*  Net::smConnectionReceive = NULL;
+PacketReceiveEvent*      Net::smPacketReceive = NULL;
 
 ConnectionNotifyEvent& Net::getConnectionNotifyEvent()
 {
@@ -683,7 +682,6 @@ static void IPSocket6ToNetAddress(const struct sockaddr_in6 *sockAddr, NetAddres
    dMemcpy(address->address.ipv6.netNum, &sockAddr->sin6_addr, sizeof(address->address.ipv6.netNum));
    address->address.ipv6.netFlow = sockAddr->sin6_flowinfo;
    address->address.ipv6.netScope = sockAddr->sin6_scope_id;
->>>>>>> bitangentBlunder
 }
 
 //
@@ -966,7 +964,7 @@ bool Net::openPort(S32 port, bool doBind)
                
             if (error == NoError)
                error = setBlocking(PlatformNetState::udpSocket, false);
-
+               
             if (error == NoError)
             {
                error = PlatformNetState::getSocketAddress(socketFd, AF_INET, &listenAddress);
@@ -974,7 +972,7 @@ bool Net::openPort(S32 port, bool doBind)
                {
                   Net::addressToString(&listenAddress, listenAddressStr);
                   Con::printf("UDP initialized on ipv4 %s", listenAddressStr);
-               }
+            }
             }
 
             if (error != NoError)
@@ -1027,7 +1025,7 @@ bool Net::openPort(S32 port, bool doBind)
                {
                   Net::addressToString(&listenAddress, listenAddressStr);
                   Con::printf("UDP initialized on ipv6 %s", listenAddressStr);
-               }
+            }
             }
             
             if (error != NoError)
