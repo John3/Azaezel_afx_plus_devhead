@@ -259,7 +259,7 @@ void SimDataBlock::performSubstitutions(SimDataBlock* dblock, const SimObject* o
             }
          }
 
-         AssertFatal(U32((uintptr_t)b) < U32((uintptr_t)b_oob), "Substitution buffer overflowed");
+         AssertFatal((uintptr_t)b < (uintptr_t)b_oob, "Substitution buffer overflowed");
 
          b[0] = '\0';
 
