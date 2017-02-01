@@ -35,8 +35,6 @@ function EditorGui::init(%this)
    $NextOperationId   = 1;
    $HeightfieldDirtyRow = -1;
 
-   %this.buildMenus();
-
    if( !isObject( %this-->ToolsPaletteWindow ) )
    {
       // Load Creator/Inspector GUI
@@ -1918,6 +1916,8 @@ function Editor::open(%this)
    if(Canvas.getContent() == GuiEditorGui.getId())
       return;
       
+   EditorGui.buildMenus();
+      
    if( !EditorGui.isInitialized )
       EditorGui.init();
 
@@ -1933,6 +1933,21 @@ function Editor::close(%this, %gui)
    if(isObject(MessageHud))
       MessageHud.close();   
    EditorGui.writeCameraSettings();
+   
+   EditorGui.onDestroyMenu();
+}
+
+function EditorGui::onDestroyMenu(%this)
+{
+   if( !isObject( %this.menuBar ) )
+      return;
+
+   // Destroy menus      
+   while( %this.menuBar.getCount() != 0 )
+      %this.menuBar.getObject( 0 ).delete();
+   
+   %this.menuBar.removeFromCanvas();
+   %this.menuBar.delete();
 }
 
 $RelightCallback = "";
