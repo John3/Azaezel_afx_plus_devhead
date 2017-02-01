@@ -606,28 +606,27 @@ void RenderParticleMgr::_onLMActivate( const char*, bool activate )
             break;
          }
       }
-   }
-   // If we found the deferred bin, set this bin to render very shortly afterwards
-   // and re-add this render-manager. If there is no pre-pass bin, or it doesn't
-   // have a depth-texture, we can't render offscreen.
-   mOffscreenRenderEnabled = deferredBin && (deferredBin->getTargetChainLength() > 0);
-   if(mOffscreenRenderEnabled)
-   {
-      rpm->removeManager(this);
-      setRenderOrder( deferredBin->getRenderOrder() + 0.011f );
-      rpm->addManager(this);
-   }
+      // If we found the deferred bin, set this bin to render very shortly afterwards
+      // and re-add this render-manager. If there is no pre-pass bin, or it doesn't
+      // have a depth-texture, we can't render offscreen.
+      mOffscreenRenderEnabled = deferredBin && (deferredBin->getTargetChainLength() > 0);
+      if (mOffscreenRenderEnabled)
+      {
+         rpm->removeManager(this);
+         setRenderOrder(deferredBin->getRenderOrder() + 0.011f);
+         rpm->addManager(this);
+      }
 
-   // Find the targets we use
-   mDeferredTarget = NamedTexTarget::find( "deferred" );
-   mEdgeTarget = NamedTexTarget::find( "edge" );
+      // Find the targets we use
+      mDeferredTarget = NamedTexTarget::find("deferred");
+      mEdgeTarget = NamedTexTarget::find("edge");
 
       // Setup the shader
       _initShader();
 
-      if ( mScreenQuadVertBuff.isNull() )
+      if (mScreenQuadVertBuff.isNull())
          _initGFXResources();
-   } 
+   }
    else
    {
       mStencilClearSB = NULL;
