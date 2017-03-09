@@ -150,7 +150,7 @@ new SimGroup(MissionGroup) {
       canSaveDynamicFields = "1";
    };
    new ConvexShape() {
-      Material = "Grid512_OrangeLines_Mat";
+      Material = "Grid_512_Orange_Lines";
       position = "8.58057 11.6688 239.583";
       rotation = "1 0 0 0";
       scale = "1 1 1";

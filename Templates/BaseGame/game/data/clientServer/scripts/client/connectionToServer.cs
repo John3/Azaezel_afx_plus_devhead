@@ -43,7 +43,7 @@ function GameConnection::initialControlSet(%this)
    // first check if the editor is active
    if (!isToolBuild() || !isMethod("Editor", "checkActiveLoadDone") || !Editor::checkActiveLoadDone())
    {
-      if (Canvas.getContent() != PlayGui.getId())
+      if (isObject(PlayGui) && Canvas.getContent() != PlayGui.getId())
          Canvas.setContent(PlayGui);
    }
 }
@@ -54,8 +54,11 @@ function GameConnection::onControlObjectChange(%this)
    
    // Reset the current FOV to match the new object
    // and turn off any current zoom.
-   resetCurrentFOV();
-   turnOffZoom();
+   if(isFunction("resetCurrentFOV"))
+   {
+      resetCurrentFOV();
+      turnOffZoom();
+   }
 }
 
 function GameConnection::onConnectionError(%this, %msg)
