@@ -33,6 +33,9 @@ singleton Material(Turret_Base)
    useAnisotropic[0] = "1";
    castDynamicShadows = true;    
    materialTag0 = "Weapon";
+   pixelSpecular0 = "0";
+   specular0 = "0.9 0.9 0.9 1";
+   specularPower0 = "10";
 };
 
 singleton Material(Turret_Lazer_Base)

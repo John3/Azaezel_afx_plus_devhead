@@ -22,7 +22,7 @@
 
 // Global movement speed that affects all cameras.  This should be moved
 // into the camera datablock.
-$Camera::movementSpeed = 30;
+$Camera::movementSpeed = 40;
 
 function Observer::onTrigger(%this,%obj,%trigger,%state)
 {
@@ -38,6 +38,14 @@ function Observer::onTrigger(%this,%obj,%trigger,%state)
          // Do something interesting.
 
       case "Corpse":
+         // Fade out the corpse
+         if (isObject(%obj.orbitObj))
+         {
+            cancelAll(%obj.orbitObj);
+            %obj.orbitObj.schedule(0, "startFade", 1000, 0, true);
+            %obj.orbitObj.schedule(1000, "delete");
+         }
+
          // Viewing dead corpse, so we probably want to respawn.
          $Game.preparePlayer(%client);
 
@@ -60,6 +68,7 @@ function Observer::setMode(%this,%obj,%mode,%arg1,%arg2,%arg3)
          // which should be arg1
          %transform = %arg1.getTransform();
          %obj.setOrbitMode(%arg1, %transform, 0.5, 4.5, 4.5);
+         %obj.orbitObj = %arg1;
 
    }
    %obj.mode = %mode;

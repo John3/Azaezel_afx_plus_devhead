@@ -23,7 +23,7 @@
 datablock PhysicsShapeData( PhysicsCube )
 {	
    category = "Physics";
-   shapeName = "art/shapes/cube/cube.dae";
+   shapeName = "data/FPSGameplay/art/shapes/cube/cube.dae";
    emap = true;
    
    //physics properties
@@ -48,7 +48,7 @@ datablock PhysicsShapeData( PhysicsCube )
 datablock PhysicsShapeData( PhysicsBoulder )
 {	
    category = "Physics";
-   shapeName = "art/shapes/rocks/boulder.dts";
+   shapeName = "data/FPSGameplay/art/shapes/rocks/boulder.dts";
    emap = true;
    
    //physics properties

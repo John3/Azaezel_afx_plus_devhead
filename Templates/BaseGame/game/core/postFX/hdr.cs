@@ -273,10 +273,6 @@ function HDRPostFX::preProcess( %this )
 
 function HDRPostFX::onEnabled( %this )
 {
-   // We don't allow hdr on OSX yet.
-   if ( $platform $= "macos" )
-      return false;
-      
    // See what HDR format would be best.
    %format = getBestHDRFormat();
    if ( %format $= "" || %format $= "GFXFormatR8G8B8A8" )
@@ -299,6 +295,7 @@ function HDRPostFX::onEnabled( %this )
    
    // Change the format of the offscreen surface
    // to an HDR compatible format.
+   %this.previousFormat = AL_FormatToken.format;
    AL_FormatToken.format = %format;
    setReflectFormat( %format );
    
@@ -316,7 +313,7 @@ function HDRPostFX::onDisabled( %this )
    GammaPostFX.enable();
    
    // Restore the non-HDR offscreen surface format.
-   %format = getBestHDRFormat();
+   %format = %this.previousFormat;
    AL_FormatToken.format = %format;
    setReflectFormat( %format );
    

@@ -37,6 +37,7 @@ singleton Material(defaultTree_bark_material)
 	translucent = false;
 	translucentBlendOp = "None";
    pixelSpecular[0] = "1";
+   castDynamicShadows = "0";
 };
 
 singleton Material(defaulttree_material)
@@ -57,6 +58,7 @@ singleton Material(defaulttree_material)
    pixelSpecular[0] = "1";
    alphaTest = "1";
    alphaRef = "127";
+   castDynamicShadows = "0";
 };
 
 singleton Material(defaultTree_fronds_material)
@@ -71,6 +73,7 @@ singleton Material(defaultTree_fronds_material)
    alphaTest = "1";
    alphaRef = "114";
    translucent = "1";
+   castDynamicShadows = "0";
 };
 
 singleton Material(defaulttree_ColorEffectR27G177B88_material)
@@ -79,4 +82,6 @@ singleton Material(defaulttree_ColorEffectR27G177B88_material)
    diffuseColor[0] = "0.105882 0.694118 0.345098 1";
    specularPower[0] = "10";
    translucentBlendOp = "None";
+   castDynamicShadows = "0";
+   castShadows = "0";
 };

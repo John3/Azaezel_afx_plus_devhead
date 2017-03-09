@@ -22,11 +22,11 @@
 // Debug Shaders.
 new ShaderData( AL_ColorBufferShader )
 {
-   DXVertexShaderFile = $Core::CommonShaderPath @ "/postFX/postFxV.hlsl";
-   DXPixelShaderFile  = "./shaders/dbgColorBufferP.hlsl";
+   DXVertexShaderFile = $Core::CommonShaderPath @ "/postFx/postFxV.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgColorBufferP.hlsl";
    
-   OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFX/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "./shaders/dbgColorBufferP.glsl";
+   OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFx/gl/postFxV.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgColorBufferP.glsl";
 
    samplerNames[0] = "colorBufferTex";
    pixVersion = 2.0;
@@ -61,39 +61,109 @@ function toggleColorBufferViz( %enable )
    }
 }
 
-new ShaderData( AL_SpecMapShader )
+//roughness map display (matinfo.b)
+new ShaderData( AL_RoughMapShader )
 {
-   DXVertexShaderFile = $Core::CommonShaderPath @ "/postFX/postFxV.hlsl";
-   DXPixelShaderFile  = "./shaders/dbgSpecMapVisualizeP.hlsl";
+   DXVertexShaderFile = $Core::CommonShaderPath @ "/postFx/postFxV.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgRoughMapVisualizeP.hlsl";
 
-   OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFX/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "./shaders/dbgSpecMapVisualizeP.glsl";
+   OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFx/gl/postFxV.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgRoughMapVisualizeP.glsl";
 
    samplerNames[0] = "matinfoTex";
    pixVersion = 2.0;
 };
 
-singleton PostEffect( AL_SpecMapVisualize )
+singleton PostEffect( AL_RoughMapVisualize )
 {   
-   shader = AL_SpecMapShader;
+   shader = AL_RoughMapShader;
    stateBlock = AL_DefaultVisualizeState;
    texture[0] = "#matinfo";
    target = "$backBuffer";
    renderPriority = 9999;
 };
 
-/// Toggles the visualization of the AL lighting specular power buffer.
-function toggleSpecMapViz( %enable )
+function toggleRoughMapViz( %enable )
 {   
    if ( %enable $= "" )
    {
-      $AL_SpecMapShaderVar = AL_SpecMapVisualize.isEnabled() ? false : true;
-      AL_SpecMapVisualize.toggle();
+      $AL_RoughMapShaderVar = AL_RoughMapVisualize.isEnabled() ? false : true;
+      AL_RoughMapVisualize.toggle();
    }
    else if ( %enable )
-      AL_SpecMapVisualize.enable();
+      AL_RoughMapVisualize.enable();
    else if ( !%enable )
-      AL_SpecMapVisualize.disable();    
+      AL_RoughMapVisualize.disable();    
+}
+
+//metalness map display (matinfo.a)
+new ShaderData( AL_MetalMapShader )
+{
+   DXVertexShaderFile = $Core::CommonShaderPath @ "/postFx/postFxV.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgMetalMapVisualizeP.hlsl";
+
+   OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFx/gl/postFxV.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgMetalMapVisualizeP.glsl";
+
+   samplerNames[0] = "matinfoTex";
+   pixVersion = 2.0;
+};
+
+singleton PostEffect( AL_MetalMapVisualize )
+{   
+   shader = AL_MetalMapShader;
+   stateBlock = AL_DefaultVisualizeState;
+   texture[0] = "#matinfo";
+   target = "$backBuffer";
+   renderPriority = 9999;
+};
+
+function toggleMetalMapViz( %enable )
+{   
+   if ( %enable $= "" )
+   {
+      $AL_MetalMapShaderVar = AL_MetalMapVisualize.isEnabled() ? false : true;
+      AL_MetalMapVisualize.toggle();
+   }
+   else if ( %enable )
+      AL_MetalMapVisualize.enable();
+   else if ( !%enable )
+      AL_MetalMapVisualize.disable();    
+}
+
+//Light map display (indirectLighting)
+new ShaderData( AL_LightMapShader )
+{
+   DXVertexShaderFile = $Core::CommonShaderPath @ "/postFx/postFxV.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgLightMapVisualizeP.hlsl";
+
+   OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFx/gl/postFxV.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgLightMapVisualizeP.glsl";
+
+   samplerNames[0] = "indirectLightingBuffer";
+   pixVersion = 2.0;
+};
+
+singleton PostEffect( AL_LightMapVisualize )
+{   
+   shader = AL_LightMapShader;
+   stateBlock = AL_DefaultVisualizeState;
+   texture[0] = "#indirectLighting";
+   target = "$backBuffer";
+   renderPriority = 9999;
+};
+
+function toggleLightMapViz( %enable )
+{   
+   if ( %enable $= "" )
+   {
+      $AL_LightMapShaderVar = AL_LightMapVisualize.isEnabled() ? false : true;
+      AL_LightMapVisualize.toggle();
+   }
+   else if ( %enable )
+      AL_LightMapVisualize.enable();
+   else if ( !%enable )
+      AL_LightMapVisualize.disable();    
 }
 
 new GFXStateBlockData( AL_DepthVisualizeState )
@@ -126,10 +196,10 @@ new GFXStateBlockData( AL_DefaultVisualizeState )
 new ShaderData( AL_DepthVisualizeShader )
 {
    DXVertexShaderFile = $Core::CommonShaderPath @ "/postFX/postFxV.hlsl";
-   DXPixelShaderFile  = "./shaders/dbgDepthVisualizeP.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgDepthVisualizeP.hlsl";
 
    OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFX/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "./shaders/dbgDepthVisualizeP.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgDepthVisualizeP.glsl";
 
    samplerNames[0] = "deferredTex";
    samplerNames[1] = "depthViz";
@@ -162,10 +232,10 @@ function AL_DepthVisualize::onEnabled( %this )
 new ShaderData( AL_GlowVisualizeShader )
 {
    DXVertexShaderFile = $Core::CommonShaderPath @ "/postFX/postFxV.hlsl";
-   DXPixelShaderFile  = "./shaders/dbgGlowVisualizeP.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgGlowVisualizeP.hlsl";
    
    OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFX/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "./shaders/dbgGlowVisualizeP.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgGlowVisualizeP.glsl";
 
    samplerNames[0] = "glowBuffer";
    pixVersion = 2.0;
@@ -183,10 +253,10 @@ singleton PostEffect( AL_GlowVisualize )
 new ShaderData( AL_NormalsVisualizeShader )
 {
    DXVertexShaderFile = $Core::CommonShaderPath @ "/postFX/postFxV.hlsl";
-   DXPixelShaderFile  = "./shaders/dbgNormalVisualizeP.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgNormalVisualizeP.hlsl";
 
    OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFX/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "./shaders/dbgNormalVisualizeP.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgNormalVisualizeP.glsl";
    
    samplerNames[0] = "deferredTex";
    
@@ -219,12 +289,12 @@ function AL_NormalsVisualize::onEnabled( %this )
 new ShaderData( AL_LightColorVisualizeShader )
 {
    DXVertexShaderFile = $Core::CommonShaderPath @ "/postFX/postFxV.hlsl";
-   DXPixelShaderFile  = "./shaders/dbgLightColorVisualizeP.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgLightColorVisualizeP.hlsl";
 
    OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFX/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "./shaders/dbgLightColorVisualizeP.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgLightColorVisualizeP.glsl";
    
-   samplerNames[0] = "lightPrePassTex";
+   samplerNames[0] = "directLightingBuffer";
    
    pixVersion = 2.0;
 };
@@ -233,7 +303,7 @@ singleton PostEffect( AL_LightColorVisualize )
 {   
    shader = AL_LightColorVisualizeShader;
    stateBlock = AL_DefaultVisualizeState;
-   texture[0] = "#lightinfo";
+   texture[0] = "#directLighting";
    target = "$backBuffer";
    renderPriority = 9999;
 };
@@ -254,12 +324,12 @@ function AL_LightColorVisualize::onEnabled( %this )
 new ShaderData( AL_LightSpecularVisualizeShader )
 {
    DXVertexShaderFile = $Core::CommonShaderPath @ "/postFX/postFxV.hlsl";
-   DXPixelShaderFile  = "./shaders/dbgLightSpecularVisualizeP.hlsl";
+   DXPixelShaderFile  = "tools/worldEditor/shaders/dbgLightSpecularVisualizeP.hlsl";
 
    OGLVertexShaderFile = $Core::CommonShaderPath @ "/postFX/gl/postFxV.glsl";
-   OGLPixelShaderFile  = "./shaders/dbgLightSpecularVisualizeP.glsl";
+   OGLPixelShaderFile  = "tools/worldEditor/shaders/dbgLightSpecularVisualizeP.glsl";
    
-   samplerNames[0] = "lightPrePassTex";
+   samplerNames[0] = "directLightingBuffer";
    
    pixVersion = 2.0;
 };
@@ -268,7 +338,7 @@ singleton PostEffect( AL_LightSpecularVisualize )
 {   
    shader = AL_LightSpecularVisualizeShader;
    stateBlock = AL_DefaultVisualizeState;
-   texture[0] = "#lightinfo";
+   texture[0] = "#directLighting";
    target = "$backBuffer";
    renderPriority = 9999;
 };
