@@ -420,13 +420,10 @@ bool PostEffect::onAdd()
             texFilename[0] == '#' )
          continue;
 
-      // If '/', then path is specified, open normally
-      if ( texFilename[0] != '/' )
-         texFilename = scriptPath.getFullPath() + '/' + texFilename;
-
       GFXTextureProfile *profile = &PostFxTextureProfile;
       if (mTexSRGB[i])
          profile = &PostFxTextureSRGBProfile;
+
       // Try to load the texture.
       bool success = mTextures[i].set( texFilename, profile, avar( "%s() - (line %d)", __FUNCTION__, __LINE__ ) );
       if (!success)
