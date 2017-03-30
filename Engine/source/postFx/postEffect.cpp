@@ -425,7 +425,7 @@ bool PostEffect::onAdd()
          profile = &PostFxTextureSRGBProfile;
 
       // Try to load the texture.
-      bool success = mTextures[i].set( texFilename, profile, avar( "%s() - (line %d)", __FUNCTION__, __LINE__ ) );
+      bool success = mTextures[i].set( texFilename, &PostFxTextureProfile, avar( "%s() - (line %d)", __FUNCTION__, __LINE__ ) );
       if (!success)
          Con::errorf("Invalid Texture for PostEffect (%s), The Texture '%s' does not exist!", this->getName(), texFilename.c_str());
    }
@@ -1080,7 +1080,7 @@ void PostEffect::_setupTarget( const SceneRenderState *state, bool *outClearTarg
             mTargetDepthStencil.getWidthHeight() != targetSize )
       {         
          mTargetDepthStencil.set( targetSize.x, targetSize.y, GFXFormatD24S8,
-                     &GFXDefaultZTargetProfile, "PostEffect::_setupTarget" );
+                     &GFXZTargetProfile, "PostEffect::_setupTarget" );
 
          if ( mTargetClear == PFXTargetClear_OnCreate )
             *outClearTarget = true;
@@ -1709,7 +1709,7 @@ DefineEngineFunction( dumpRandomNormalMap, void, (),,
 {
    GFXTexHandle tex;
 
-   tex.set( 64, 64, GFXFormatR8G8B8A8, &GFXDefaultPersistentProfile, "" );
+   tex.set( 64, 64, GFXFormatR8G8B8A8, &GFXTexturePersistentProfile, "" );
 
    GFXLockedRect *rect = tex.lock();
    U8 *f = rect->bits;

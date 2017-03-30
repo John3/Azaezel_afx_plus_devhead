@@ -65,6 +65,8 @@ new SimGroup(MissionGroup) {
       squareSize = "2";
       tile = "0";
       baseTexSize = "1024";
+      baseTexFormat = "DDS";
+      lightMapSize = "256";
       screenError = "16";
       position = "-1024 -1024 179.978";
       rotation = "1 0 0 0";

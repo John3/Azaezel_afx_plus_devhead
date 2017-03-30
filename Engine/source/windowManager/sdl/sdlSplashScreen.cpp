@@ -122,5 +122,6 @@ bool Platform::closeSplashWindow()
       SDL_DestroyWindow(gSplashWindow);
       gSplashWindow = nullptr;
    }
+
    return true;
 }

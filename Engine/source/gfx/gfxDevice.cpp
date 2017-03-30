@@ -213,11 +213,11 @@ void GFXDevice::deviceInited()
    // Initialize the static helper textures.
    GBitmap temp( 2, 2, false, GFXFormatR8G8B8A8 );
    temp.fill( ColorI::ONE );
-   GFXTexHandle::ONE.set( &temp, &GFXDefaultStaticDiffuseProfile, false, "GFXTexHandle::ONE" ); 
+   GFXTexHandle::ONE.set( &temp, &GFXStaticTextureSRGBProfile, false, "GFXTexHandle::ONE" ); 
    temp.fill( ColorI::ZERO );
-   GFXTexHandle::ZERO.set( &temp, &GFXDefaultStaticDiffuseProfile, false, "GFXTexHandle::ZERO" ); 
+   GFXTexHandle::ZERO.set( &temp, &GFXStaticTextureSRGBProfile, false, "GFXTexHandle::ZERO" ); 
    temp.fill( ColorI( 128, 128, 255 ) );
-   GFXTexHandle::ZUP.set( &temp, &GFXDefaultStaticNormalMapProfile, false, "GFXTexHandle::ZUP" ); 
+   GFXTexHandle::ZUP.set( &temp, &GFXNormalMapProfile, false, "GFXTexHandle::ZUP" );
 }
 
 bool GFXDevice::destroy()
@@ -570,6 +570,13 @@ void GFXDevice::updateStates(bool forceSetAll /*=false*/)
 #ifdef TORQUE_DEBUG_RENDER
    doParanoidStateCheck();
 #endif
+}
+
+void GFXDevice::clearTextureStateImmediate(U32 stage)
+{
+   mCurrentTexture[stage] = NULL;
+   mCurrentCubemap[stage] = NULL;
+   setTextureInternal(stage, NULL);
 }
 
 void GFXDevice::setPrimitiveBuffer( GFXPrimitiveBuffer *buffer )
@@ -1315,10 +1322,9 @@ DefineEngineFunction( getBestHDRFormat, GFXFormat, (),,
    // Figure out the best HDR format.  This is the smallest
    // format which supports blending and filtering.
    Vector<GFXFormat> formats;
-   //formats.push_back( GFXFormatR10G10B10A2 ); TODO: replace with SRGB format once DX9 is gone - BJR
-   formats.push_back( GFXFormatR16G16B16A16F );
-   formats.push_back( GFXFormatR16G16B16A16 ); 
-   GFXFormat format = GFX->selectSupportedFormat(  &GFXDefaultRenderTargetProfile,
+   formats.push_back(GFXFormatR16G16B16A16F);
+   formats.push_back( GFXFormatR10G10B10A2 );   
+   GFXFormat format = GFX->selectSupportedFormat(  &GFXRenderTargetProfile,
                                                    formats, 
                                                    true,
                                                    true,
