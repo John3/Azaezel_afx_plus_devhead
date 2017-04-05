@@ -34,7 +34,7 @@ singleton ShaderData( ParticlesShaderData )
    OGLPixelShaderFile      = "shaders/common/gl/particlesP.glsl";
    
    samplerNames[0] = "$diffuseMap";
-   samplerNames[1] = "$prepassTex";
+   samplerNames[1] = "$deferredTex";
    samplerNames[2] = "$paraboloidLightMap";
    
    pixVersion = 2.0;
@@ -103,7 +103,7 @@ new ShaderData( fxFoliageReplicatorShader )
    pixVersion = 1.4;
 };
 
-singleton ShaderData( VolumetricFogPrePassShader )
+singleton ShaderData( VolumetricFogDeferredShader )
 {
    DXVertexShaderFile = "shaders/common/VolumetricFog/VFogPreV.hlsl";
    DXPixelShaderFile = "shaders/common/VolumetricFog/VFogPreP.hlsl";
@@ -121,7 +121,7 @@ singleton ShaderData( VolumetricFogShader )
    OGLVertexShaderFile  = "shaders/common/VolumetricFog/gl/VFogV.glsl";
    OGLPixelShaderFile   = "shaders/common/VolumetricFog/gl/VFogP.glsl";	
 	
-   samplerNames[0] = "$prepassTex";
+   samplerNames[0] = "$deferredTex";
    samplerNames[1] = "$depthBuffer";
    samplerNames[2] = "$frontBuffer";
    samplerNames[3] = "$density";
@@ -135,6 +135,18 @@ singleton ShaderData( VolumetricFogReflectionShader )
 	
    OGLVertexShaderFile  = "shaders/common/VolumetricFog/gl/VFogPreV.glsl";
    OGLPixelShaderFile   = "shaders/common/VolumetricFog/gl/VFogRefl.glsl";
+	
+   pixVersion = 3.0;
+};
+singleton ShaderData( CubemapSaveShader )
+{
+   DXVertexShaderFile = "shaders/common/cubemapSaveV.hlsl";
+   DXPixelShaderFile = "shaders/common/cubemapSaveP.hlsl";
+	
+   OGLVertexShaderFile  = "shaders/common/gl/cubemapSaveV.glsl";
+   OGLPixelShaderFile   = "shaders/common/gl/cubemapSaveP.glsl";
+   
+   samplerNames[0] = "$cubemapTex";
 	
    pixVersion = 3.0;
 };

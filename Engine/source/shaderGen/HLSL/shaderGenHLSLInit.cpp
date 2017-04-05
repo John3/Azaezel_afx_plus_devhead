@@ -35,6 +35,7 @@
 // Deferred Shading
 #include "lighting/advanced/hlsl/deferredShadingFeaturesHLSL.h"
 #include "shaderGen/HLSL/accuFeatureHLSL.h"
+#include "shaderGen/HLSL/materialDamageHLSL.h"
 
 static ShaderGen::ShaderGenInitDelegate sInitDelegate;
 
@@ -46,7 +47,8 @@ void _initShaderGenHLSL( ShaderGen *shaderGen )
 
    FEATUREMGR->registerFeature( MFT_VertTransform, new VertPositionHLSL );
    FEATUREMGR->registerFeature( MFT_RTLighting, new RTLightingFeatHLSL );
-   FEATUREMGR->registerFeature( MFT_IsDXTnm, new NamedFeatureHLSL( "DXTnm" ) );
+   FEATUREMGR->registerFeature( MFT_IsBC3nm, new NamedFeatureHLSL( "BC3nm" ) );
+   FEATUREMGR->registerFeature( MFT_IsBC5nm, new NamedFeatureHLSL( "BC5nm" ) );
    FEATUREMGR->registerFeature( MFT_TexAnim, new TexAnimHLSL );
    FEATUREMGR->registerFeature( MFT_DiffuseMap, new DiffuseMapFeatHLSL );
    FEATUREMGR->registerFeature( MFT_OverlayMap, new OverlayTexFeatHLSL );
@@ -61,8 +63,11 @@ void _initShaderGenHLSL( ShaderGen *shaderGen )
    FEATUREMGR->registerFeature( MFT_NormalMap, new BumpFeatHLSL );
    FEATUREMGR->registerFeature( MFT_DetailNormalMap, new NamedFeatureHLSL( "Detail Normal Map" ) );
    FEATUREMGR->registerFeature( MFT_DetailMap, new DetailFeatHLSL );
+	FEATUREMGR->registerFeature( MFT_StaticCubemap, new NamedFeatureHLSL( "Static Cubemap" ) );
    FEATUREMGR->registerFeature( MFT_CubeMap, new ReflectCubeFeatHLSL );
    FEATUREMGR->registerFeature( MFT_PixSpecular, new PixelSpecularHLSL );
+   FEATUREMGR->registerFeature( MFT_FlipRB, new NamedFeatureHLSL( "Substance Workaround" ) );
+   FEATUREMGR->registerFeature( MFT_InvertSmoothness, new NamedFeatureHLSL( "Roughest = 1.0" ) );
    FEATUREMGR->registerFeature( MFT_IsTranslucent, new NamedFeatureHLSL( "Translucent" ) );
    FEATUREMGR->registerFeature( MFT_IsTranslucentZWrite, new NamedFeatureHLSL( "Translucent ZWrite" ) );
    FEATUREMGR->registerFeature( MFT_Visibility, new VisibilityFeatHLSL );
@@ -75,6 +80,12 @@ void _initShaderGenHLSL( ShaderGen *shaderGen )
    FEATUREMGR->registerFeature( MFT_RenderTarget2_Zero, new RenderTargetZeroHLSL( ShaderFeature::RenderTarget2 ) );
    FEATUREMGR->registerFeature( MFT_RenderTarget3_Zero, new RenderTargetZeroHLSL( ShaderFeature::RenderTarget3 ) );
    FEATUREMGR->registerFeature( MFT_Imposter, new NamedFeatureHLSL( "Imposter" ) );
+   
+   //damage blend 
+   FEATUREMGR->registerFeature(MFT_AlbedoDamage, new AlbedoDamageFeatHLSL);
+   FEATUREMGR->registerFeature(MFT_NormalDamage, new NamedFeatureHLSL("Damage Normal Map"));
+   FEATUREMGR->registerFeature(MFT_CompositeDamage, new CompositeDamageFeatHLSL);
+   FEATUREMGR->registerFeature(MFT_Damage, new NamedFeatureHLSL("materialDamage"));
 
    FEATUREMGR->registerFeature( MFT_DiffuseMapAtlas, new NamedFeatureHLSL( "Diffuse Map Atlas" ) );
    FEATUREMGR->registerFeature( MFT_NormalMapAtlas, new NamedFeatureHLSL( "Normal Map Atlas" ) );
@@ -94,7 +105,7 @@ void _initShaderGenHLSL( ShaderGen *shaderGen )
 
    FEATUREMGR->registerFeature( MFT_ParticleNormal, new ParticleNormalFeatureHLSL );
 
-   FEATUREMGR->registerFeature( MFT_InterlacedPrePass, new NamedFeatureHLSL( "Interlaced Pre Pass" ) );
+   FEATUREMGR->registerFeature( MFT_InterlacedDeferred, new NamedFeatureHLSL( "Interlaced Pre Pass" ) );
 
    FEATUREMGR->registerFeature( MFT_ForwardShading, new NamedFeatureHLSL( "Forward Shaded Material" ) );
 
@@ -104,7 +115,6 @@ void _initShaderGenHLSL( ShaderGen *shaderGen )
    FEATUREMGR->registerFeature( MFT_DeferredSpecMap, new DeferredSpecMapHLSL );
    FEATUREMGR->registerFeature( MFT_DeferredSpecVars, new DeferredSpecVarsHLSL );
    FEATUREMGR->registerFeature( MFT_DeferredMatInfoFlags, new DeferredMatInfoFlagsHLSL );
-   FEATUREMGR->registerFeature( MFT_DeferredEmptySpec, new DeferredEmptySpecHLSL );
    FEATUREMGR->registerFeature( MFT_SkyBox,  new NamedFeatureHLSL( "skybox" ) );
    FEATUREMGR->registerFeature( MFT_HardwareSkinning, new HardwareSkinningFeatureHLSL );
 }
@@ -117,8 +127,6 @@ MODULE_BEGIN( ShaderGenHLSL )
    MODULE_INIT
    {
       sInitDelegate.bind(_initShaderGenHLSL);
-      SHADERGEN->registerInitDelegate(Direct3D9, sInitDelegate);
-      SHADERGEN->registerInitDelegate(Direct3D9_360, sInitDelegate);
       SHADERGEN->registerInitDelegate(Direct3D11, sInitDelegate);
    }
    

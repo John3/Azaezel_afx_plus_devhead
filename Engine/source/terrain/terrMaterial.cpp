@@ -167,8 +167,8 @@ TerrainMaterial* TerrainMaterial::findOrCreate( const char *nameOrPath )
       mat->mDiffuseSize = 500;
       mat->mDetailMap = GFXTextureManager::getWarningTexturePath();
       mat->mDetailSize = 5;
-	  mat->mMacroMap = GFXTextureManager::getWarningTexturePath();
-	  mat->mMacroSize = 200;
+      mat->mMacroMap = GFXTextureManager::getWarningTexturePath();
+      mat->mMacroSize = 200;
       mat->registerObject();
       
       Sim::getRootGroup()->addObject( mat );

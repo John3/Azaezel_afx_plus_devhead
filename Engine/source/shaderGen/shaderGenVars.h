@@ -38,6 +38,7 @@ struct ShaderGenVars
    const static String worldToObj;
    const static String viewToObj;
    const static String cubeTrans;
+   const static String cubeMips;
    const static String objTrans;
    const static String cubeEyePos;
    const static String eyePos;
@@ -49,6 +50,8 @@ struct ShaderGenVars
    const static String fogData;
    const static String fogColor;
    const static String detailScale;
+   const static String materialDamage;
+   const static String materialDamageMin;
    const static String visibility;
    const static String colorMultiply;
    const static String alphaTestValue;
@@ -77,8 +80,8 @@ struct ShaderGenVars
    const static String lightSpotAngle;
    const static String lightSpotFalloff;
    const static String specularColor;
-   const static String specularPower;
-   const static String specularStrength;
+   const static String smoothness;
+   const static String metalness;
    
    // Textures
    const static String fogMap;

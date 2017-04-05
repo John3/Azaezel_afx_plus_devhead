@@ -35,6 +35,8 @@ bool Platform::displaySplashWindow( String path )
 {
    if(path.isEmpty())
       return false;
+   // TODO: Fix splash screen on macOS.
+   // SDL_Renderer forces GL context to be 2.1 even when using SDL_RENDERER_SOFTWARE
 
    Torque::Path iconPath = Torque::Path(path);
 

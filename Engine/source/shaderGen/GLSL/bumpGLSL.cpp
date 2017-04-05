@@ -42,7 +42,6 @@ void BumpFeatGLSL::processVert(  Vector<ShaderComponent*> &componentList,
    // Output the texture coord.
    getOutTexCoord(   "texCoord", 
                      "vec2", 
-                     true, 
                      useTexAnim, 
                      meta, 
                      componentList );
@@ -64,7 +63,7 @@ void BumpFeatGLSL::processPix(   Vector<ShaderComponent*> &componentList,
 	output = meta;
 
    // Get the texture coord.
-   Var *texCoord = getInTexCoord( "texCoord", "vec2", true, componentList );
+   Var *texCoord = getInTexCoord( "texCoord", "vec2", componentList );
 
    // Sample the bumpmap.
    Var *bumpMap = getNormalMapTex();
@@ -156,7 +155,7 @@ void BumpFeatGLSL::processPix(   Vector<ShaderComponent*> &componentList,
       bumpMap->sampler = true;
       bumpMap->constNum = Var::getTexUnitNum();
 		
-      texCoord = getInTexCoord( "detCoord", "vec2", true, componentList );
+      texCoord = getInTexCoord( "detCoord", "vec2", componentList );
       texOp = new GenOp( "tex2D(@, @)", bumpMap, texCoord );
 		
       Var *detailBump = new Var;
@@ -170,6 +169,46 @@ void BumpFeatGLSL::processPix(   Vector<ShaderComponent*> &componentList,
       detailBumpScale->uniform = true;
       detailBumpScale->constSortPos = cspPass;
       meta->addStatement( new GenOp( "   @.xy += @.xy * @;\r\n", bumpNorm, detailBump, detailBumpScale ) );
+   }
+
+   if (fd.features.hasFeature(MFT_NormalDamage))
+   {
+      bumpMap = new Var;
+      bumpMap->setType("sampler2D");
+      bumpMap->setName("normalDamageMap");
+      bumpMap->uniform = true;
+      bumpMap->sampler = true;
+      bumpMap->constNum = Var::getTexUnitNum();
+
+      texCoord = getInTexCoord("texCoord", "vec2", componentList);
+      texOp = new GenOp("tex2D(@, @)", bumpMap, texCoord);
+
+      Var *damageBump = new Var;
+      damageBump->setName("damageBump");
+      damageBump->setType("vec4");
+      meta->addStatement(expandNormalMap(texOp, new DecOp(damageBump), damageBump, fd));
+
+      Var *damage = (Var*)LangElement::find("materialDamage");
+      if (!damage){
+         damage = new Var("materialDamage", "float");
+         damage->uniform = true;
+         damage->constSortPos = cspPrimitive;
+      }
+      Var *floor = (Var*)LangElement::find("materialDamageMin");
+      if (!floor){
+         floor = new Var("materialDamageMin", "float");
+         floor->uniform = true;
+         floor->constSortPos = cspPrimitive;
+      }
+
+      Var *damageResult = (Var*)LangElement::find("damageResult");
+      if (!damageResult){
+         damageResult = new Var("damageResult", "float");
+         meta->addStatement(new GenOp("   @ = max(@,@);\r\n", new DecOp(damageResult), floor, damage));
+      }
+      else
+         meta->addStatement(new GenOp("   @ = max(@,@);\r\n", damageResult, floor, damage));
+      meta->addStatement(new GenOp("   @.xyz = mix(@.xyz, @.xyz, @);\r\n", bumpNorm, bumpNorm, damageBump, damageResult));
    }
 	
    // We transform it into world space by reversing the 
@@ -205,6 +244,14 @@ ShaderFeature::Resources BumpFeatGLSL::getResources( const MaterialFeatureData &
       if ( !fd.features[MFT_DetailMap] )
          res.numTexReg++;
    }
+
+   // Do we have damage normal mapping?
+   if (fd.features[MFT_NormalDamage])
+   {
+      res.numTex++;
+      if (!fd.features[MFT_NormalDamage])
+         res.numTexReg++;
+   }
 		
    return res;
 }
@@ -231,6 +278,13 @@ void BumpFeatGLSL::setTexData(   Material::StageData &stageDat,
       passData.mTexType[ texIndex ] = Material::DetailBump;
       passData.mSamplerNames[ texIndex ] = "detailBumpMap";
       passData.mTexSlot[ texIndex++ ].texObject = stageDat.getTex( MFT_DetailNormalMap );
+   }
+
+   if (fd.features[MFT_NormalDamage])
+   {
+      passData.mTexType[texIndex] = Material::Bump;
+      passData.mSamplerNames[texIndex] = "normalDamageMap";
+      passData.mTexSlot[texIndex++].texObject = stageDat.getTex(MFT_NormalDamage);
    }
 }
 
@@ -267,7 +321,6 @@ void ParallaxFeatGLSL::processVert( Vector<ShaderComponent*> &componentList,
    // Add the texture coords.
    getOutTexCoord(   "texCoord", 
                      "vec2", 
-						true, 
 						fd.features[MFT_TexAnim], 
 						meta, 
 						componentList );
@@ -312,7 +365,7 @@ void ParallaxFeatGLSL::processPix(  Vector<ShaderComponent*> &componentList,
    MultiLine *meta = new MultiLine;
 	
    // Order matters... get this first!
-   Var *texCoord = getInTexCoord( "texCoord", "vec2", true, componentList );
+   Var *texCoord = getInTexCoord( "texCoord", "vec2", componentList );
 	
    ShaderConnector *connectComp = dynamic_cast<ShaderConnector *>( componentList[C_CONNECTOR] );
 	
@@ -339,15 +392,15 @@ void ParallaxFeatGLSL::processPix(  Vector<ShaderComponent*> &componentList,
    Var *normalMap = getNormalMapTex();
 	
    // Call the library function to do the rest.
-   if (fd.features.hasFeature(MFT_IsDXTnm, getProcessIndex()))
+   if (fd.features.hasFeature(MFT_IsBC3nm, getProcessIndex()))
    {
       meta->addStatement(new GenOp("   @.xy += parallaxOffsetDxtnm( @, @.xy, @, @ );\r\n",
-      texCoord, normalMap, texCoord, negViewTS, parallaxInfo));
+         texCoord, normalMap, texCoord, negViewTS, parallaxInfo));
    }
    else
    {
       meta->addStatement(new GenOp("   @.xy += parallaxOffset( @, @.xy, @, @ );\r\n",
-      texCoord, normalMap, texCoord, negViewTS, parallaxInfo));
+         texCoord, normalMap, texCoord, negViewTS, parallaxInfo));
    }
    
    // TODO: Fix second UV maybe?
@@ -365,9 +418,9 @@ ShaderFeature::Resources ParallaxFeatGLSL::getResources( const MaterialFeatureDa
    // We add the outViewTS to the outputstructure.
    res.numTexReg = 1;
 	
-   // If this isn't a prepass then we will be
+   // If this isn't a deferred then we will be
    // creating the normal map here.
-   if ( !fd.features.hasFeature( MFT_PrePassConditioner ) )
+   if ( !fd.features.hasFeature( MFT_DeferredConditioner ) )
       res.numTex = 1;
 	
    return res;
@@ -408,7 +461,6 @@ void NormalsOutFeatGLSL::processVert(  Vector<ShaderComponent*> &componentList,
    outNormal->setName( "wsNormal" );
    outNormal->setStructName( "OUT" );
    outNormal->setType( "vec3" );
-   outNormal->mapsToSampler = false;
 	
    // Find the incoming vertex normal.
    Var *inNormal = (Var*)LangElement::find( "normal" );   

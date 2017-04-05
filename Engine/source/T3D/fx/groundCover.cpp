@@ -47,7 +47,7 @@
 #include "materials/sceneData.h"
 #include "materials/materialFeatureTypes.h"
 #include "materials/matInstance.h"
-#include "renderInstance/renderPrePassMgr.h"
+#include "renderInstance/renderDeferredMgr.h"
 #include "console/engineAPI.h"
 
 /// This is used for rendering ground cover billboards.
@@ -944,7 +944,7 @@ void GroundCover::_initialize( U32 cellCount, U32 cellPlacementCount )
       Material* mat = dynamic_cast<Material*>(mMatInst->getMaterial());
       if(mat)
       {
-         GFXTexHandle tex(mat->mDiffuseMapFilename[0], &GFXDefaultStaticDiffuseProfile, "GroundCover texture aspect ratio check" );
+         GFXTexHandle tex(mat->mDiffuseMapFilename[0], &GFXStaticTextureSRGBProfile, "GroundCover texture aspect ratio check" );
          if(tex.isValid())
          {
             U32 w = tex.getWidth();

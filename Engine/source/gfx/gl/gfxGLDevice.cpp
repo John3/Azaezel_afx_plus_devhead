@@ -170,16 +170,20 @@ void GFXGLDevice::initGLState()
    }
 #endif
 
+   //set vysnc
    PlatformGL::setVSync(smDisableVSync ? 0 : 1);
-
+   
    //install vsync callback
-   Con::NotifyDelegate clbk(this, &GFXGLDevice::vsyncCallback);
-   Con::addVariableNotify("$pref::Video::disableVerticalSync", clbk);
+   Con::NotifyDelegate clbk( this, &GFXGLDevice::vsyncCallback );
+   Con::addVariableNotify( "$pref::Video::disableVerticalSync", clbk );
 
    //OpenGL 3 need a binded VAO for render
    GLuint vao;
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
+
+   //enable sRGB
+   glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 void GFXGLDevice::vsyncCallback()
@@ -236,6 +240,7 @@ GFXGLDevice::GFXGLDevice(U32 adapterIndex) :
       mModelViewProjSC[i] = NULL;
 
    mOpenglStateCache = new GFXGLStateCache;
+
 }
 
 GFXGLDevice::~GFXGLDevice()
@@ -581,7 +586,8 @@ void GFXGLDevice::drawPrimitive( GFXPrimitiveType primType, U32 vertexStart, U32
 {
    preDrawPrimitive();
   
-   vertexStart += mCurrentVB[0]->mBufferVertexOffset;
+   if(mCurrentVB[0])
+      vertexStart += mCurrentVB[0]->mBufferVertexOffset;
 
    if(mDrawInstancesCount)
       glDrawArraysInstanced(GFXGLPrimType[primType], vertexStart, primCountToIndexCount(primType, primitiveCount), mDrawInstancesCount);

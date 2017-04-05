@@ -200,6 +200,7 @@ public:
    // Data
    //-----------------------------------------------------------------------
    FileName mDiffuseMapFilename[MAX_STAGES];
+   bool     mDiffuseMapSRGB[MAX_STAGES];   // SRGB diffuse
    bool     mAccuEnabled[MAX_STAGES];
    F32      mAccuScale[MAX_STAGES];
    F32      mAccuDirection[MAX_STAGES];
@@ -212,7 +213,15 @@ public:
    FileName mDetailMapFilename[MAX_STAGES];
    FileName mNormalMapFilename[MAX_STAGES];
 
+   bool     mFlipRB[MAX_STAGES];
+   bool     mInvertSmoothness[MAX_STAGES];
    FileName mSpecularMapFilename[MAX_STAGES];
+   FileName mRoughMapFilename[MAX_STAGES];
+   F32      msmoothnessChan[MAX_STAGES];
+   FileName mAOMapFilename[MAX_STAGES];
+   F32      mAOChan[MAX_STAGES];
+   FileName mMetalMapFilename[MAX_STAGES];
+   F32      mMetalChan[MAX_STAGES];
 
    /// A second normal map which repeats at the detail map
    /// scale and blended with the base normal map.
@@ -221,15 +230,24 @@ public:
    /// The strength scalar for the detail normal map.
    F32 mDetailNormalMapStrength[MAX_STAGES];   
       
+
+   /// Damage blend maps (albedo)
+   FileName mAlbedoDamageMapFilename[MAX_STAGES];
+   bool mAlbedoDamageMapSRGB[MAX_STAGES];
+   /// Damage blend maps (normal)
+   FileName mNormalDamageMapFilename[MAX_STAGES];
+   /// Damage blend maps (Roughness, AO, Metalness)
+   FileName mCompositeDamageMapFilename[MAX_STAGES];
+   /// Damage blend minimum
+   F32      mMaterialDamageMin[MAX_STAGES];
+
    /// This color is the diffuse color of the material
    /// or if it has a texture it is multiplied against 
    /// the diffuse texture color.
    ColorF mDiffuse[MAX_STAGES];
-
-   ColorF mSpecular[MAX_STAGES];
-
-   F32 mSpecularPower[MAX_STAGES];
-   F32 mSpecularStrength[MAX_STAGES];
+   
+   F32 msmoothness[MAX_STAGES];
+   F32 mMetalness[MAX_STAGES];
    bool mPixelSpecular[MAX_STAGES];
 
    bool mVertLit[MAX_STAGES];

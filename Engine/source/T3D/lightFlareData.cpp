@@ -633,7 +633,7 @@ bool LightFlareData::_preload( bool server, String &errorStr )
    if ( !server )
    {
       if ( mFlareTextureName.isNotEmpty() )      
-         mFlareTexture.set( mFlareTextureName, &GFXDefaultStaticDiffuseProfile, "FlareTexture" );  
+         mFlareTexture.set( mFlareTextureName, &GFXStaticTextureSRGBProfile, "FlareTexture" );
    }
 
    return true;
@@ -661,11 +661,6 @@ void LightFlareData::_makePrimBuffer( GFXPrimitiveBufferHandle *pb, U32 count )
    U16 *ibIndices;
    GFXBufferType bufferType = GFXBufferTypeStatic;
 
-#ifdef TORQUE_OS_XENON
-   // Because of the way the volatile buffers work on Xenon this is the only
-   // way to do this.
-   bufferType = GFXBufferTypeVolatile;
-#endif
    pb->set( GFX, indexListSize, 0, bufferType );
    pb->lock( &ibIndices );
    dMemcpy( ibIndices, indices, indexListSize * sizeof(U16) );

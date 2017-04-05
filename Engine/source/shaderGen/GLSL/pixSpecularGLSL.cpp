@@ -91,7 +91,7 @@ void PixelSpecularGLSL::processPix( Vector<ShaderComponent*> &componentList,
       if (specularColor)
          final = new GenOp( "@ * @", final, specularColor );
    }
-   else if ( fd.features[MFT_NormalMap] && !fd.features[MFT_IsDXTnm] )
+   else if ( fd.features[MFT_NormalMap] && !fd.features[MFT_IsBC3nm] && !fd.features[MFT_IsBC5nm])
    {
       Var *bumpColor = (Var*)LangElement::find( "bumpNormal" );
       final = new GenOp( "@ * @.a", final, bumpColor );
@@ -118,7 +118,6 @@ void SpecularMapGLSL::processVert(Vector<ShaderComponent*> &componentList, const
    // Add the texture coords.
    getOutTexCoord("texCoord",
      "vec2",
-      true,
       fd.features[MFT_TexAnim],
       meta,
       componentList);
@@ -129,7 +128,7 @@ void SpecularMapGLSL::processVert(Vector<ShaderComponent*> &componentList, const
 void SpecularMapGLSL::processPix( Vector<ShaderComponent*> &componentList, const MaterialFeatureData &fd )
 {
    // Get the texture coord.
-   Var *texCoord = getInTexCoord( "texCoord", "vec2", true, componentList );
+   Var *texCoord = getInTexCoord( "texCoord", "vec2", componentList );
 
    // create texture var
    Var *specularMap = new Var;
@@ -141,8 +140,28 @@ void SpecularMapGLSL::processPix( Vector<ShaderComponent*> &componentList, const
    LangElement *texOp = new GenOp( "texture(@, @)", specularMap, texCoord );
 
    Var *specularColor = new Var( "specularColor", "vec4" );
+   Var *metalness = (Var*)LangElement::find("metalness");
+   if (!metalness) metalness = new Var("metalness", "float");
+   Var *smoothness = (Var*)LangElement::find("smoothness");
+   if (!smoothness) smoothness = new Var("smoothness", "float");
+   MultiLine * meta = new MultiLine;
 
-   output = new GenOp( "   @ = @;\r\n", new DecOp( specularColor ), texOp );
+   if (fd.features[MFT_FlipRB])
+   {
+      meta->addStatement(new GenOp("   @ = @.r;\r\n", new DecOp(metalness), texOp));
+      meta->addStatement(new GenOp("   @ = @.b;\r\n", new DecOp(smoothness), texOp));
+   }
+   else
+   {
+      meta->addStatement(new GenOp("   @ = @.r;\r\n", new DecOp(smoothness), texOp));
+      meta->addStatement(new GenOp("   @ = @.b;\r\n", new DecOp(metalness), texOp));
+   }
+
+   if (fd.features[MFT_InvertSmoothness])
+      meta->addStatement(new GenOp("   @ = 1.0-@;\r\n", smoothness, smoothness));
+
+   meta->addStatement(new GenOp("   @ = @.ggga;\r\n", new DecOp(specularColor), texOp));
+   output = meta;
 }
 
 ShaderFeature::Resources SpecularMapGLSL::getResources( const MaterialFeatureData &fd )

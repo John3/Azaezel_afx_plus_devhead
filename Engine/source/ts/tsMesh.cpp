@@ -54,10 +54,6 @@
 
 #include "opcode/Opcode.h"
 
-#if defined(TORQUE_OS_XENON)
-#  include "platformXbox/platformXbox.h"
-#endif
-
 GFXPrimitiveType drawTypes[] = { GFXTriangleList, GFXTriangleStrip };
 #define getDrawType(a) (drawTypes[a])
 
@@ -213,6 +209,7 @@ void TSMesh::innerRender( TSMaterialList *materials, const TSRenderState &rdata,
 
    coreRI->visibility = meshVisibility;  
    coreRI->cubemap = rdata.getCubemap();
+   coreRI->mMaterialDamage = rdata.getMaterialDamage();
 
    if ( getMeshType() == TSMesh::SkinMeshType )
    {

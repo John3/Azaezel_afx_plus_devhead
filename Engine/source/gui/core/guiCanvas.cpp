@@ -1801,7 +1801,6 @@ void GuiCanvas::renderFrame(bool preRenderOnly, bool bufferSwap /* = true */)
    if (GuiOffscreenCanvas::sList.size() != 0)
    {
       // Reset the entire state since oculus shit will have barfed it.
-      GFX->disableShaders(true);
       GFX->updateStates(true);
 
       for (Vector<GuiOffscreenCanvas*>::iterator itr = GuiOffscreenCanvas::sList.begin(); itr != GuiOffscreenCanvas::sList.end(); itr++)
@@ -2367,8 +2366,8 @@ DefineEngineFunction(excludeOtherInstance, bool, (const char* appIdentifer),,
                 "@ingroup Platform\n"
                 "@ingroup GuiCore")
 {
-      // mac/360 can only run one instance in general.
-#if !defined(TORQUE_OS_MAC) && !defined(TORQUE_OS_XENON) && !defined(TORQUE_DEBUG) && !defined(TORQUE_OS_LINUX)
+	   // mac/360 can only run one instance in general.
+#if !defined(TORQUE_OS_MAC) && !defined(TORQUE_DEBUG) && !defined(TORQUE_OS_LINUX)
    return Platform::excludeOtherInstances(appIdentifer);
 #else
    // We can just return true if we get here.
