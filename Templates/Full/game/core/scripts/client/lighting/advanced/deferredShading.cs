@@ -95,7 +95,7 @@ singleton PostEffect( AL_DeferredShading )
    stateBlock = AL_DeferredShadingState;
    texture[0] = "#color";
    texture[1] = "#directLighting";
-   texture[2] = "#matinfo";
+   texture[2] = "#matres";
    texture[3] = "#indirectLighting";
    texture[4] = "#deferred";
    target = "$backBuffer";

@@ -327,7 +327,7 @@ new CustomMaterial( ReflectionProbeMaterial )
    stateBlock = AL_ProbeState;
    
    sampler["deferredBuffer"] = "#deferred";
-   sampler["matInfoBuffer"] = "#matinfo";
+   sampler["matInfoBuffer"] = "#matres";
    
    target = "indirectLighting";
    

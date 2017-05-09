@@ -28,8 +28,11 @@ function WetnessPostFx::setShaderConsts( %this )
       $WetnessPostFx::splashRandom = %rand;
    }
    
-   %this-->rainsplash.setShaderConst( "$splashRandom", $WetnessPostFx::splashRandom );
-   %this-->rainsplash.setShaderConst( "$splashAlpha", $WetnessPostFx::splashAlpha );
+   if (isObject(%this-->rainsplash))
+   {
+      %this-->rainsplash.setShaderConst( "$splashRandom", $WetnessPostFx::splashRandom );
+      %this-->rainsplash.setShaderConst( "$splashAlpha", $WetnessPostFx::splashAlpha );
+   }
 }
 
 //-----------------------------------------------------------------------------
@@ -125,16 +128,42 @@ singleton ShaderData( WetnessRainSplashShader )
    pixVersion = 3.0;
 };
 
+singleton ShaderData( cloneShader )
+{   
+   DXVertexShaderFile 	= "shaders/common/postFx/postFxV.hlsl";
+   DXPixelShaderFile 	= "shaders/common/postFx/cloneP.hlsl"; 
+   
+   samplerNames[0] = "inputTex";
+             
+   pixVersion = 3.0;
+};
+
 //-----------------------------------------------------------------------------
 // PostEffects
 //-----------------------------------------------------------------------------
+singleton PostEffect( DryPostFX )
+{ 
+   isEnabled = false;
+   
+   renderTime = "PFXBeforeBin";
+   renderBin = "ProbeBin";
+   target = "#matres";
+   renderPriority = 9999;
+   
+   shader = cloneShader;   
+
+   texture[0] = "#matinfo";
+};
 
 singleton PostEffect( WetnessPostFX )
 {     
    isEnabled = false;
+   allowReflectPass = false;
      
    renderTime = "PFXBeforeBin";
-   renderBin = "FinalBin";
+   renderBin = "ProbeBin";
+   target = "#matres";
+   renderPriority = 9999;
    
    shader = WetnessShader;
    stateBlock = WetnessStateBlock;
@@ -147,6 +176,8 @@ singleton PostEffect( WetnessPostFX )
    singleton PostEffect()
    {
       internalName = "refract";
+      renderTime = "PFXBeforeBin";
+      renderBin = "FinalBin";
       
       shader = WetnessRefractShader;
       stateBlock = WetnessStateBlock;
@@ -160,6 +191,8 @@ singleton PostEffect( WetnessPostFX )
    singleton PostEffect()
    {
       internalName = "rainfall";
+      renderTime = "PFXBeforeBin";
+      renderBin = "FinalBin";
       
       shader = WetnessRainFallShader;
       stateBlock = WetnessStateBlock;
@@ -172,6 +205,8 @@ singleton PostEffect( WetnessPostFX )
    singleton PostEffect()
    {
       internalName = "rainsplash";
+      renderTime = "PFXBeforeBin";
+      renderBin = "FinalBin";
       
       shader = WetnessRainSplashShader;
       stateBlock = WetnessStateBlock;
@@ -180,5 +215,4 @@ singleton PostEffect( WetnessPostFX )
       texture[1] = "#directLighting";
       texture[2] = "./splashNormal.png";  
    };
-   
 };

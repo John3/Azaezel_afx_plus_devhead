@@ -88,5 +88,5 @@ float4 main( PFXVertToPix IN ) : TORQUE_TARGET0
    lightcolor.rgb = lerp( 0.08 * lightcolor.rgb, diffuseColor, wetsum );
    color.rgb =  diffuseColor + lightcolor.rgb;    
    
-   return hdrEncode( float4(wsNormal,1) ); 
+   return hdrEncode( float4(0,wetsum,wetsum,wetsum) ); 
 }
