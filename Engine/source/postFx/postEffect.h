@@ -91,6 +91,7 @@ protected:
    GFXTexHandle mTextures[NumTextures];
 
    NamedTexTarget mNamedTarget;
+   bool mPreExistingNamedTarget;
    NamedTexTarget mNamedTargetDepthStencil; 
 
    GFXTextureObject *mActiveTextures[NumTextures];

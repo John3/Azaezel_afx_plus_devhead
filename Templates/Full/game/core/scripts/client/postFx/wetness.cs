@@ -158,7 +158,6 @@ singleton PostEffect( DryPostFX )
 singleton PostEffect( WetnessPostFX )
 {     
    isEnabled = false;
-   allowReflectPass = false;
      
    renderTime = "PFXBeforeBin";
    renderBin = "ProbeBin";

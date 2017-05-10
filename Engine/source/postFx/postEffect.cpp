@@ -311,6 +311,7 @@ PostEffect::PostEffect()
       mDeltaTimeSC( NULL ),
       mInvCameraMatSC( NULL )
 {
+   mPreExistingNamedTarget = false;
    dMemset( mTexSRGB, 0, sizeof(bool) * NumTextures);
    dMemset( mActiveTextures, 0, sizeof( GFXTextureObject* ) * NumTextures );
    dMemset( mActiveNamedTarget, 0, sizeof( NamedTexTarget* ) * NumTextures );
@@ -433,8 +434,16 @@ bool PostEffect::onAdd()
    // Is the target a named target?
    if ( mTargetName.isNotEmpty() && mTargetName[0] == '#' )
    {
-      mNamedTarget.registerWithName( mTargetName.substr( 1 ) );
-      mNamedTarget.getTextureDelegate().bind( this, &PostEffect::_getTargetTexture );
+      // Is the target a pre-existing named target?
+      if (NamedTexTarget::find(mTargetName.substr(1)))
+      {
+         mNamedTarget = *(NamedTexTarget::find(mTargetName.substr(1)));
+      }
+      else
+      {
+         mNamedTarget.registerWithName(mTargetName.substr(1));
+         mNamedTarget.getTextureDelegate().bind(this, &PostEffect::_getTargetTexture);
+      }
    }
    if ( mTargetDepthStencilName.isNotEmpty() && mTargetDepthStencilName[0] == '#' )
       mNamedTargetDepthStencil.registerWithName( mTargetDepthStencilName.substr( 1 ) );
@@ -471,7 +480,7 @@ void PostEffect::onRemove()
    if ( mNamedTarget.isRegistered() || mNamedTargetDepthStencil.isRegistered() )
       GFXTextureManager::removeEventDelegate( this, &PostEffect::_onTextureEvent );
 
-   if ( mNamedTarget.isRegistered() )
+   if (!mPreExistingNamedTarget && mNamedTarget.isRegistered())
    {
       mNamedTarget.unregister();
       mNamedTarget.getTextureDelegate().clear();
