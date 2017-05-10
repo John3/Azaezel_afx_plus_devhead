@@ -309,7 +309,8 @@ PostEffect::PostEffect()
       mCameraForwardSC( NULL ),
       mAccumTimeSC( NULL ),
       mDeltaTimeSC( NULL ),
-      mInvCameraMatSC( NULL )
+      mInvCameraMatSC( NULL ),
+      mNamedTarget( NULL )
 {
    mPreExistingNamedTarget = false;
    dMemset( mTexSRGB, 0, sizeof(bool) * NumTextures);
@@ -432,25 +433,27 @@ bool PostEffect::onAdd()
    }
 
    // Is the target a named target?
-   if ( mTargetName.isNotEmpty() && mTargetName[0] == '#' )
+   if (mTargetName.isNotEmpty() && mTargetName[0] == '#')
    {
       // Is the target a pre-existing named target?
       if (NamedTexTarget::find(mTargetName.substr(1)))
       {
-         mNamedTarget = *(NamedTexTarget::find(mTargetName.substr(1)));
+         mNamedTarget = NamedTexTarget::find(mTargetName.substr(1));
          mPreExistingNamedTarget = true;
       }
       else
       {
-         mNamedTarget.registerWithName(mTargetName.substr(1));
-         mNamedTarget.getTextureDelegate().bind(this, &PostEffect::_getTargetTexture);
+         mNamedTarget = new NamedTexTarget();
+         mNamedTarget->registerWithName(mTargetName.substr(1));
+         mNamedTarget->getTextureDelegate().bind(this, &PostEffect::_getTargetTexture);
       }
    }
-   if ( mTargetDepthStencilName.isNotEmpty() && mTargetDepthStencilName[0] == '#' )
-      mNamedTargetDepthStencil.registerWithName( mTargetDepthStencilName.substr( 1 ) );
+   if (mTargetDepthStencilName.isNotEmpty() && mTargetDepthStencilName[0] == '#')
+      mNamedTargetDepthStencil.registerWithName(mTargetDepthStencilName.substr(1));
 
-   if (mNamedTarget.isRegistered() || mNamedTargetDepthStencil.isRegistered())
-      GFXTextureManager::addEventDelegate( this, &PostEffect::_onTextureEvent );
+   if ((mNamedTarget && mNamedTarget->isRegistered()) || mNamedTargetDepthStencil.isRegistered())
+      GFXTextureManager::addEventDelegate(this, &PostEffect::_onTextureEvent);
+
 
    // Call onAdd in script
    onAdd_callback();
@@ -478,13 +481,13 @@ void PostEffect::onRemove()
    mShader = NULL;
    _cleanTargets();
 
-   if ( mNamedTarget.isRegistered() || mNamedTargetDepthStencil.isRegistered() )
+   if ((mNamedTarget && mNamedTarget->isRegistered()) || mNamedTargetDepthStencil.isRegistered())
       GFXTextureManager::removeEventDelegate( this, &PostEffect::_onTextureEvent );
 
-   if (!mPreExistingNamedTarget && mNamedTarget.isRegistered())
+   if (!mPreExistingNamedTarget && (mNamedTarget && mNamedTarget->isRegistered()))
    {
-      mNamedTarget.unregister();
-      mNamedTarget.getTextureDelegate().clear();
+      mNamedTarget->unregister();
+      mNamedTarget->getTextureDelegate().clear();
    }
 
    if ( mNamedTargetDepthStencil.isRegistered() )
@@ -977,20 +980,20 @@ void PostEffect::_setupTransforms()
 
 void PostEffect::_setupTarget( const SceneRenderState *state, bool *outClearTarget )
 {
-   if (mPreExistingNamedTarget)
+   if (mPreExistingNamedTarget && mNamedTarget)
    {
-      GFXTextureObject *namedTargetTexObject = mNamedTarget.getTexture();
-      if (!namedTargetTexObject)
+      mTargetTex = mNamedTarget->getTexture();
+      if (!mTargetTex)
       {
-         Con::errorf("Trying to re-use a nonexistent namedTargetTexObject!(%s)", mNamedTarget.getName().c_str());
+         Con::errorf("Trying to re-use a nonexistent namedTargetTexObject!(%s)", mNamedTarget->getName().c_str());
          return;
       }
 
-      GFX->setTexture(0, namedTargetTexObject);
+      GFX->setTexture(0, mTargetTex);
    }
    else
    {
-      if (mNamedTarget.isRegistered() ||
+      if ((mNamedTarget && mNamedTarget->isRegistered()) ||
          mTargetName.compare("$outTex", 0, String::NoCase) == 0)
       {
          // Size it relative to the texture of the first stage or
@@ -1022,9 +1025,9 @@ void PostEffect::_setupTarget( const SceneRenderState *state, bool *outClearTarg
          // Make sure its at least 1x1.
          targetSize.setMax(Point2I::One);
 
-         if (mNamedTarget.isRegistered() ||
+         if (mNamedTarget && (mNamedTarget->isRegistered() ||
             !mTargetTex ||
-            mTargetTex.getWidthHeight() != targetSize)
+            mTargetTex.getWidthHeight() != targetSize))
          {
             mTargetTex.set(targetSize.x, targetSize.y, mTargetFormat,
                &PostFxTargetProfile, "PostEffect::_setupTarget");
@@ -1042,7 +1045,7 @@ void PostEffect::_setupTarget( const SceneRenderState *state, bool *outClearTarg
 
                const RectI &viewport = GFX->getViewport();
 
-               mNamedTarget.setViewport(RectI(viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y));
+               mNamedTarget->setViewport(RectI(viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y));
             }
             else if (mTargetViewport == PFXTargetViewport_NamedInTexture0 && mActiveNamedTarget[0] && mActiveNamedTarget[0]->getTexture())
             {
@@ -1052,12 +1055,12 @@ void PostEffect::_setupTarget( const SceneRenderState *state, bool *outClearTarg
 
                const RectI &viewport = mActiveNamedTarget[0]->getViewport();
 
-               mNamedTarget.setViewport(RectI(viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y));
+               mNamedTarget->setViewport(RectI(viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y));
             }
             else
             {
                // PFXTargetViewport_TargetSize
-               mNamedTarget.setViewport(RectI(0, 0, targetSize.x, targetSize.y));
+               mNamedTarget->setViewport(RectI(0, 0, targetSize.x, targetSize.y));
             }
          }
       }
@@ -1225,10 +1228,10 @@ void PostEffect::process(  const SceneRenderState *state,
       // Set the render target but not its viewport.  We'll do that below.
       GFX->setActiveRenderTarget( mTarget, false );
 
-      if(mNamedTarget.isRegistered())
+      if ((mNamedTarget && mNamedTarget->isRegistered()))
       {
          // Always use the name target's viewport, if available.  It was set up in _setupTarget().
-         GFX->setViewport(mNamedTarget.getViewport());
+         GFX->setViewport(mNamedTarget->getViewport());
       }
       else if(mTargetViewport == PFXTargetViewport_GFXViewport)
       {
@@ -1308,7 +1311,7 @@ void PostEffect::process(  const SceneRenderState *state,
 
    // Return and release our target texture.
    inOutTex = mTargetTex;
-   if ( !mNamedTarget.isRegistered() )
+   if (!(mNamedTarget && mNamedTarget->isRegistered()))
       mTargetTex = NULL;
 
    // Restore the transforms before the children
@@ -1457,7 +1460,7 @@ void PostEffect::_checkRequirements()
    }
 
    // First make sure the target format is supported.
-   if ( mNamedTarget.isRegistered() )
+   if ((mNamedTarget && mNamedTarget->isRegistered()))
    {
       Vector<GFXFormat> formats;
       formats.push_back( mTargetFormat );

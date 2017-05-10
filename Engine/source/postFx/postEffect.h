@@ -90,7 +90,7 @@ protected:
 
    GFXTexHandle mTextures[NumTextures];
 
-   NamedTexTarget mNamedTarget;
+   NamedTexTargetRef mNamedTarget;
    bool mPreExistingNamedTarget;
    NamedTexTarget mNamedTargetDepthStencil; 
 
@@ -261,7 +261,7 @@ protected:
    /// @see GFXTextureManager::addEventDelegate
    void _onTextureEvent( GFXTexCallbackCode code )
    {
-      if ( code == GFXZombify && (mNamedTarget.isRegistered() || mNamedTargetDepthStencil.isRegistered()) )
+      if (code == GFXZombify && ((mNamedTarget && mNamedTarget->isRegistered()) || mNamedTargetDepthStencil.isRegistered()))
          _cleanTargets();
    }
 
