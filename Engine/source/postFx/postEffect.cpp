@@ -438,6 +438,7 @@ bool PostEffect::onAdd()
       if (NamedTexTarget::find(mTargetName.substr(1)))
       {
          mNamedTarget = *(NamedTexTarget::find(mTargetName.substr(1)));
+         mPreExistingNamedTarget = true;
       }
       else
       {
@@ -976,79 +977,93 @@ void PostEffect::_setupTransforms()
 
 void PostEffect::_setupTarget( const SceneRenderState *state, bool *outClearTarget )
 {
-   if (  mNamedTarget.isRegistered() || 
-         mTargetName.compare( "$outTex", 0, String::NoCase ) == 0 )
+   if (mPreExistingNamedTarget)
    {
-      // Size it relative to the texture of the first stage or
-      // if NULL then use the current target.
-
-      Point2I targetSize;
-
-      // If we have an absolute target size then use that.
-      if ( !mTargetSize.isZero() )
-         targetSize = mTargetSize;
-
-      // Else generate a relative size using the target scale.
-      else if ( mActiveTextures[ 0 ] )
+      GFXTextureObject *namedTargetTexObject = mNamedTarget.getTexture();
+      if (!namedTargetTexObject)
       {
-         const Point3I &texSize = mActiveTextures[ 0 ]->getSize();
-
-         targetSize.set(   texSize.x * mTargetScale.x,
-                           texSize.y * mTargetScale.y );
-      }
-      else
-      {
-         GFXTarget *oldTarget = GFX->getActiveRenderTarget();
-         const Point2I &oldTargetSize = oldTarget->getSize();
-
-         targetSize.set(   oldTargetSize.x * mTargetScale.x,
-                           oldTargetSize.y * mTargetScale.y );
+         Con::errorf("Trying to re-use a nonexistent namedTargetTexObject!(%s)", mNamedTarget.getName().c_str());
+         return;
       }
 
-      // Make sure its at least 1x1.
-      targetSize.setMax( Point2I::One );
-
-      if (  mNamedTarget.isRegistered() ||
-            !mTargetTex ||
-            mTargetTex.getWidthHeight() != targetSize )
+      GFX->setTexture(0, namedTargetTexObject);
+   }
+   else
+   {
+      if (mNamedTarget.isRegistered() ||
+         mTargetName.compare("$outTex", 0, String::NoCase) == 0)
       {
-         mTargetTex.set( targetSize.x, targetSize.y, mTargetFormat,
-            &PostFxTargetProfile, "PostEffect::_setupTarget" );
+         // Size it relative to the texture of the first stage or
+         // if NULL then use the current target.
 
-         if ( mTargetClear == PFXTargetClear_OnCreate )
-            *outClearTarget = true;
+         Point2I targetSize;
 
-         if(mTargetViewport == PFXTargetViewport_GFXViewport)
+         // If we have an absolute target size then use that.
+         if (!mTargetSize.isZero())
+            targetSize = mTargetSize;
+
+         // Else generate a relative size using the target scale.
+         else if (mActiveTextures[0])
          {
-            // We may need to scale the GFX viewport to fit within
-            // our target texture size
-            GFXTarget *oldTarget = GFX->getActiveRenderTarget();
-            const Point2I &oldTargetSize = oldTarget->getSize();
-            Point2F scale(targetSize.x / F32(oldTargetSize.x), targetSize.y / F32(oldTargetSize.y));
+            const Point3I &texSize = mActiveTextures[0]->getSize();
 
-            const RectI &viewport = GFX->getViewport();
-
-            mNamedTarget.setViewport( RectI( viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y ) );
-         }
-         else if(mTargetViewport == PFXTargetViewport_NamedInTexture0 && mActiveNamedTarget[0] && mActiveNamedTarget[0]->getTexture())
-         {
-            // Scale the named input texture's viewport to match our target
-            const Point3I &namedTargetSize = mActiveNamedTarget[0]->getTexture()->getSize();
-            Point2F scale(targetSize.x / F32(namedTargetSize.x), targetSize.y / F32(namedTargetSize.y));
-
-            const RectI &viewport = mActiveNamedTarget[0]->getViewport();
-
-            mNamedTarget.setViewport( RectI( viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y ) );
+            targetSize.set(texSize.x * mTargetScale.x,
+               texSize.y * mTargetScale.y);
          }
          else
          {
-            // PFXTargetViewport_TargetSize
-            mNamedTarget.setViewport( RectI( 0, 0, targetSize.x, targetSize.y ) );
+            GFXTarget *oldTarget = GFX->getActiveRenderTarget();
+            const Point2I &oldTargetSize = oldTarget->getSize();
+
+            targetSize.set(oldTargetSize.x * mTargetScale.x,
+               oldTargetSize.y * mTargetScale.y);
+         }
+
+         // Make sure its at least 1x1.
+         targetSize.setMax(Point2I::One);
+
+         if (mNamedTarget.isRegistered() ||
+            !mTargetTex ||
+            mTargetTex.getWidthHeight() != targetSize)
+         {
+            mTargetTex.set(targetSize.x, targetSize.y, mTargetFormat,
+               &PostFxTargetProfile, "PostEffect::_setupTarget");
+
+            if (mTargetClear == PFXTargetClear_OnCreate)
+               *outClearTarget = true;
+
+            if (mTargetViewport == PFXTargetViewport_GFXViewport)
+            {
+               // We may need to scale the GFX viewport to fit within
+               // our target texture size
+               GFXTarget *oldTarget = GFX->getActiveRenderTarget();
+               const Point2I &oldTargetSize = oldTarget->getSize();
+               Point2F scale(targetSize.x / F32(oldTargetSize.x), targetSize.y / F32(oldTargetSize.y));
+
+               const RectI &viewport = GFX->getViewport();
+
+               mNamedTarget.setViewport(RectI(viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y));
+            }
+            else if (mTargetViewport == PFXTargetViewport_NamedInTexture0 && mActiveNamedTarget[0] && mActiveNamedTarget[0]->getTexture())
+            {
+               // Scale the named input texture's viewport to match our target
+               const Point3I &namedTargetSize = mActiveNamedTarget[0]->getTexture()->getSize();
+               Point2F scale(targetSize.x / F32(namedTargetSize.x), targetSize.y / F32(namedTargetSize.y));
+
+               const RectI &viewport = mActiveNamedTarget[0]->getViewport();
+
+               mNamedTarget.setViewport(RectI(viewport.point.x*scale.x, viewport.point.y*scale.y, viewport.extent.x*scale.x, viewport.extent.y*scale.y));
+            }
+            else
+            {
+               // PFXTargetViewport_TargetSize
+               mNamedTarget.setViewport(RectI(0, 0, targetSize.x, targetSize.y));
+            }
          }
       }
+      else
+         mTargetTex = NULL;
    }
-   else
-      mTargetTex = NULL;
 
    // Do we have a named depthStencil target?
    if ( mNamedTargetDepthStencil.isRegistered() )
