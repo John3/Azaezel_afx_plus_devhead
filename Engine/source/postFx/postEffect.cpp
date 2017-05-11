@@ -983,7 +983,7 @@ void PostEffect::_setupTarget( const SceneRenderState *state, bool *outClearTarg
    if (mPreExistingNamedTarget && mNamedTarget)
    {
       mTargetTex = mNamedTarget->getTexture();
-      if (mTargetTex.isValid())
+      if (!mTargetTex.isValid())
       {
          Con::errorf("Trying to re-use a nonexistent namedTargetTexObject!(%s)", mNamedTarget->getName().c_str());
          return;
